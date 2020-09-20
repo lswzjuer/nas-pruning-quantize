@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 18:06:07
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-19 20:28:05
+# @Last Modified time: 2020-09-20 19:57:37
 
 import torch 
 import torch.nn as nn
@@ -179,8 +179,8 @@ class ResNet(nn.Module):
         #out = self.glopool(out)
         out = F.avg_pool2d(out, out.size()[3])
         out = out.view(out.size(0), -1)
-        # if isinstance(self.block,BasicBlock_1w1a):
-        #     out=F.hardtanh(self.bn2(out))
+        if isinstance(self.block,BasicBlock_1w1a):
+            out=self.bn2(out)
         # else:
         #     out=F.relu(self.bn2(out)) 
         out = self.linear(out)

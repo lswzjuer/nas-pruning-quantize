@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-18 01:04:24
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-19 02:40:54
+# @Last Modified time: 2020-09-20 20:07:33
 
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -245,16 +245,16 @@ def SQNRComputer(data,weight=True):
 
 
 if __name__ == '__main__':
-    #paramsFlopsCounter(Models,10,(3,32,32))
-    checkpoint=r"./checkpoints/vgg13_cifar10_300_128_0.007_1/ckpts/vgg13_best.pth.tar"
-    save_path=r"./histogram"
-    cifar10=getDataloader("cifar10","val",64,
-                        2,True,False)
-    collect=weightActivateCollect(1,cifar10,"VGG13",10,checkpoint)
-    weightdict,actdict=collect.weightactCollect()
-    # histgram
-    collect.weighthistgram(weightdict,save_path)
-    collect.actihistgram(actdict,save_path)
-    collect.wbinaryhistgram(weightdict,save_path)
-    collect.abinaryhistgram(actdict,save_path)
+    paramsFlopsCounter(Models,10,(3,64,64))
+    # checkpoint=r"./checkpoints/vgg13_cifar10_300_128_0.007_1/ckpts/vgg13_best.pth.tar"
+    # save_path=r"./histogram"
+    # cifar10=getDataloader("cifar10","val",64,
+    #                     2,True,False)
+    # collect=weightActivateCollect(1,cifar10,"VGG13",10,checkpoint)
+    # weightdict,actdict=collect.weightactCollect()
+    # # histgram
+    # collect.weighthistgram(weightdict,save_path)
+    # collect.actihistgram(actdict,save_path)
+    # collect.wbinaryhistgram(weightdict,save_path)
+    # collect.abinaryhistgram(actdict,save_path)
 

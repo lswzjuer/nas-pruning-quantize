@@ -2,11 +2,16 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 17:33:13
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-19 17:33:49
-
+# @Last Modified time: 2020-09-20 20:06:00
 
 from torch.autograd import Function
 import torch
+
+
+def safeSign(tensor):
+    result = torch.sign(tensor)
+    result[result==0] = 1
+    return result
 
 
 class BinaryQuantizeIRNetF(Function):
@@ -16,7 +21,8 @@ class BinaryQuantizeIRNetF(Function):
     @staticmethod
     def forward(ctx, input, k, t):
         ctx.save_for_backward(input, k, t)
-        out = torch.sign(input)
+        out = safeSign(input)
+        #out = torch.sign(input)
         return out
 
     @staticmethod
@@ -44,7 +50,8 @@ class BinaryQuantizeReActNetF(Function):
     @staticmethod
     def forward(ctx, input):
         ctx.save_for_backward(input)
-        out = torch.sign(input)
+        out = safeSign(input)
+        #out = torch.sign(input)
         return out
 
     @staticmethod
@@ -80,3 +87,7 @@ class BinaryQuantizeReActNetM(torch.nn.Module):
         return out
 
 
+
+
+if __name__ == '__main__':
+    print(torch.sign(torch.zeros((2,2))))

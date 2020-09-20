@@ -2,20 +2,8 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-19 21:01:36
+# @Last Modified time: 2020-09-20 20:03:32
 
-
-
-# -*- coding: utf-8 -*-
-# @Author: liusongwei
-# @Date:   2020-09-19 20:35:40
-# @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-19 20:57:14
-# -*- coding: utf-8 -*-
-# @Author: liusongwei
-# @Date:   2020-09-19 18:53:35
-# @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-19 20:35:04
 
 import numpy as np 
 import sys
@@ -79,7 +67,7 @@ def getArgs():
     # recorder and logging
     parser.add_argument('--save-dir', dest='save_dir',
                         help='The directory used to save the trained models',
-                        default='./checkpoints', type=str)
+                        default='../checkpoints', type=str)
     parser.add_argument('--postfix',
                         help='model folder postfix',
                         default='1', type=str)
@@ -166,7 +154,7 @@ def main():
 
 
     # best recoder
-    perf_scoreboard = PerformanceScoreboard(args.num_best_scores)
+    perf_scoreboard = PerformanceScoreboard(args.num_best_scores,logger)
 
     # resume 
     start_epoch=0
@@ -187,13 +175,13 @@ def main():
 
     # just eval model
     if args.eval:
-        validate(valLoader, model, criterion, -1, monitors, args)
+        validate(valLoader, model, criterion, -1, monitors, args,logger)
     else:
         # resume training or pretrained model, we should eval model firstly.
         if args.resume or args.pretrained:
             logger.info('>>>>>>>> Epoch -1 (pre-trained model evaluation)')
             top1, top5, _ = validate(valLoader, model, criterion,
-                                             start_epoch - 1, monitors, args)
+                                             start_epoch - 1, monitors, args,logger)
             perf_scoreboard.update(top1, top5, start_epoch - 1)
 
         # start training 
@@ -227,8 +215,8 @@ def main():
                                                             k,t))
 
             t_top1, t_top5, t_loss = train(trainLoader, model, criterion, optimizer,
-                                                   scheduler, epoch, monitors, args)
-            v_top1, v_top5, v_loss = validate(valLoader, model, criterion, epoch, monitors, args)
+                                                   scheduler, epoch, monitors, args,logger)
+            v_top1, v_top5, v_loss = validate(valLoader, model, criterion, epoch, monitors, args,logger)
 
             tbmonitor.writer.add_scalars('Train_vs_Validation/Loss', {'train': t_loss, 'val': v_loss}, epoch)
             tbmonitor.writer.add_scalars('Train_vs_Validation/Top1', {'train': t_top1, 'val': v_top1}, epoch)
@@ -249,7 +237,7 @@ def main():
             scheduler.step()
 
         logger.info('>>>>>>>> Epoch -1 (final model evaluation)')
-        validate(valLoader, model, criterion, -1, monitors, args)
+        validate(valLoader, model, criterion, -1, monitors, args,logger)
 
     tbmonitor.writer.close()  # close the TensorBoard
     logger.info('Program completed successfully ... exiting ...')
@@ -257,8 +245,7 @@ def main():
 
 
 
-def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors, args):
-    logger = logging.getLogger()
+def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors, args,logger):
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
@@ -306,8 +293,7 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors,
     return top1.avg, top5.avg, losses.avg
 
 
-def validate(data_loader, model, criterion, epoch, monitors, args):
-    logger = logging.getLogger()
+def validate(data_loader, model, criterion, epoch, monitors, args,logger):
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
