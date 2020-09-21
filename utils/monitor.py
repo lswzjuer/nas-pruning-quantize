@@ -78,8 +78,7 @@ class TensorBoardMonitor(Monitor):
 
 
 class PerformanceScoreboard:
-    def __init__(self, num_best_scores,logger):
-        self.logger = logger
+    def __init__(self, num_best_scores):
         self.board = list()
         self.num_best_scores = num_best_scores
 
@@ -92,10 +91,7 @@ class PerformanceScoreboard:
         self.board = sorted(self.board,
                             key=operator.itemgetter('top1', 'top5', 'epoch'),
                             reverse=True)[0:curr_len]
-        for idx in range(curr_len):
-            score = self.board[idx]
-            self.logger.info('Scoreboard best %d ==> Epoch [%d][Top1: %.3f   Top5: %.3f]',
-                        idx + 1, score['epoch'], score['top1'], score['top5'])
-
+        return curr_len,self.board
+        
     def is_best(self, epoch):
         return self.board[0]['epoch'] == epoch

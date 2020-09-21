@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:52:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-20 20:01:52
+# @Last Modified time: 2020-09-21 14:27:59
 
 
 
@@ -151,7 +151,7 @@ def main():
 
 
     # best recoder
-    perf_scoreboard = PerformanceScoreboard(args.num_best_scores,logger)
+    perf_scoreboard = PerformanceScoreboard(args.num_best_scores)
 
     # resume 
     start_epoch=0
@@ -172,7 +172,11 @@ def main():
             logger.info('>>>>>>>> Epoch -1 (pre-trained model evaluation)')
             top1, top5, _ = validate(valLoader, model, criterion,
                                              start_epoch - 1, monitors, args,logger)
-            perf_scoreboard.update(top1, top5, start_epoch - 1)
+            l,board=perf_scoreboard.update(top1, top5, start_epoch - 1)
+            for idx in range(l):
+                score = board[idx]
+                logger.info('Scoreboard best %d ==> Epoch [%d][Top1: %.3f   Top5: %.3f]',
+                                idx + 1, score['epoch'], score['top1'], score['top5'])
         # start training 
         for epoch in range(start_epoch, args.epochs):
             logger.info('>>>>>>>> Epoch {} Lr {}'.format(epoch,optimizer.param_groups[0]['lr']))
@@ -185,7 +189,13 @@ def main():
             tbmonitor.writer.add_scalars('Train_vs_Validation/Top1', {'train': t_top1, 'val': v_top1}, epoch)
             tbmonitor.writer.add_scalars('Train_vs_Validation/Top5', {'train': t_top5, 'val': v_top5}, epoch)
 
-            perf_scoreboard.update(v_top1, v_top5, epoch)
+
+            l,board=perf_scoreboard.update(v_top1, v_top5, epoch)
+            for idx in range(l):
+                score = board[idx]
+                logger.info('Scoreboard best %d ==> Epoch [%d][Top1: %.3f   Top5: %.3f]',
+                                idx + 1, score['epoch'], score['top1'], score['top5'])
+
             is_best = perf_scoreboard.is_best(epoch)
             # save model
             if epoch% args.save_freq==0:

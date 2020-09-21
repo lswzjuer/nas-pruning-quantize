@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-20 20:16:21
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-21 12:50:33
+# @Last Modified time: 2020-09-21 14:15:26
 import torch
 import torch.nn as nn
 from torch.autograd import Function
@@ -48,7 +48,6 @@ class alphaHtanHFunc(Function):
         grad_alpha = grad_output * grad_alpha
         # N C H W
         grad_alpha = grad_alpha.sum().view(1)
-        print(grad_alpha)
         return grad_input , grad_alpha
 
 
@@ -75,18 +74,26 @@ class alphaHtanhLayer(nn.Module):
 
 
 
+
+
+
+
 if __name__ == "__main__":
     # 2X10
     testdata=torch.tensor([-4,-3,-2,-1,-0.5,0.5,1,2,4],requires_grad=True)
     # ly=nn.Linear(10,5)
     # output = ly(testdata)
     # print(output)
-    act=aphlaHtanhLayer()
+    act=alphaHtanhLayer()
     output = act(testdata)
     print(output)
     weight = torch.ones(output.size())
-    grad = torch.autograd.grad(outputs=output,inputs=testdata,grad_outputs=weight)
-    print(grad[0])
+    output.backward(weight)
+    for name, p in act.named_parameters():
+        print(p,p.grad)
+    # weight = torch.ones(output.size())
+    # grad = torch.autograd.grad(outputs=output,inputs=testdata,grad_outputs=weight)
+    # print(grad[0])
 
     # grad_alpha = torch.sum(testdata,dim=0)
     # print(grad_alpha)
