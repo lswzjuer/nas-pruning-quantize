@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-21 13:02:40
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-21 14:31:39
+# @Last Modified time: 2020-09-21 15:47:53
 
 import numpy as np 
 import sys
@@ -139,30 +139,29 @@ def main():
         criterion=criterion.to(args.device)
 
 
-    all_parameters = model.parameters()
-    act_params=[]
-    for pname,p in model.named_parameters():
-        if "nonlinear" in pname:
-            act_params.append(p)
+    # all_parameters = model.parameters()
+    # act_params=[]
+    # for pname,p in model.named_parameters():
+    #     if "nonlinear" in pname:
+    #         act_params.append(p)
+    # act_params_id= list(map(id,act_params))
+    # other_parameters= list(filter(lambda p: id(p) not in act_params_id, all_parameters))
 
-    logger.info("Act layer params :\n {}".format(act_params))
-
-    act_params_id= list(map(id,act_params))
-    other_parameters= list(filter(lambda p: id(p) not in act_params_id, all_parameters))
+    logger.info("Act layer params :\n {}".format(model.alpha_parameters()))
 
     if args.optimizer.lower() == 'sgd':
         optimizer = torch.optim.SGD(
                     [
-                    {"params": other_parameters,"lr":args.lr,"weight_decay":args.weight_decay},
-                    {"params": act_params, "lr": 0.001, "weight_decay": 0.0}
+                    {"params": model.other_parameters(),"lr":args.lr,"weight_decay":args.weight_decay},
+                    {"params": model.alpha_parameters(), "lr": 0.001, "weight_decay": 0.0}
                     ],
                     momentum=args.momentum )
 
     elif args.optimizer.lower() == 'adam':
         optimizer = torch.optim.Adam(
                     [
-                    {"params": other_parameters,"lr":args.lr,"weight_decay":args.weight_decay},
-                    {"params": act_params, "lr": 0.001, "weight_decay": 0.0}
+                    {"params": model.other_parameters(),"lr":args.lr,"weight_decay":args.weight_decay},
+                    {"params": model.alpha_parameters(), "lr": 0.001, "weight_decay": 0.0}
                     ],
                     betas=(0.9, 0.999))
     else:
@@ -308,10 +307,11 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors,
         loss.backward()
 
         # vis alpha param`s value and it`s grad
-        for pname,p in model.named_parameters:
+        for pname,p in model.named_parameters():
             if "nonlinear" in pname:
                 print("{}  oldvalue:{}  currentgrad:{}".format(pname, p, p.grad))
 
+                
         # update alpha and weights
         optimizer.step()
 

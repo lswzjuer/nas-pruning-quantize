@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-21 12:37:58
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-21 13:02:19
+# @Last Modified time: 2020-09-21 15:40:54
 
 
 
@@ -69,6 +69,21 @@ class VGG_SMALL_1W1A_AHTANHLayer(nn.Module):
                 n = m.weight.size(1)
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
+
+    def alpha_parameters(self):
+        act_params=[]
+        for pname, p in self.named_parameters():
+            if "nonlinear" in pname:
+                act_params.append(p)
+        return act_params
+
+    def other_parameters(self):
+        other_parameters=[]
+        for pname,p in self.named_parameters():
+            if "nonlinear" not in pname:
+                other_parameters.append(p)
+        return other_parameters
+
 
 
     def forward(self, x):
@@ -151,6 +166,19 @@ class VGG_SMALL_1W1A_AHTANHChannel(nn.Module):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
+    def alpha_parameters(self):
+        act_params=[]
+        for pname, p in self.named_parameters():
+            if "nonlinear" in pname:
+                act_params.append(p)
+        return act_params
+
+    def other_parameters(self):
+        other_parameters=[]
+        for pname,p in self.named_parameters():
+            if "nonlinear" not in pname:
+                other_parameters.append(p)
+        return other_parameters
 
     def forward(self, x):
         x = self.conv0(x)
@@ -228,6 +256,20 @@ class VGG_SMALL_1W1A_AHTANHLayerShared(nn.Module):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
+    def alpha_parameters(self):
+        act_params=[]
+        for pname, p in self.named_parameters():
+            if "nonlinear" in pname:
+                act_params.append(p)
+        return act_params
+
+    def other_parameters(self):
+        other_parameters=[]
+        for pname,p in self.named_parameters():
+            if "nonlinear" not in pname:
+                other_parameters.append(p)
+        return other_parameters
+
 
     def forward(self, x):
         x = self.conv0(x)
@@ -303,7 +345,21 @@ class VGG_SMALL_1W32A_AHTANH(nn.Module):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
+    def alpha_parameters(self):
+        act_params=[]
+        for pname, p in self.named_parameters():
+            if "nonlinear" in pname:
+                act_params.append(p)
+        return act_params
 
+    def other_parameters(self):
+        other_parameters=[]
+        for pname,p in self.named_parameters():
+            if "nonlinear" not in pname:
+                other_parameters.append(p)
+        return other_parameters
+
+        
     def forward(self, x):
         x = self.conv0(x)
         x = self.bn0(x)

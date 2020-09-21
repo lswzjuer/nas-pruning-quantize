@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-20 00:18:13
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-21 14:32:18
+# @Last Modified time: 2020-09-21 15:46:04
 
 
 # -*- coding: utf-8 -*-
@@ -285,7 +285,6 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors,
 
 
         # sqnr weight quantization loss
-        # TODO
         for name,param in model.named_parameters():
             
 
