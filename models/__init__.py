@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:11:29
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 02:23:53
+# @Last Modified time: 2020-09-22 22:03:47
 from torch.nn import init
 from .efficientnet import EfficientNetB0
 from .googlenet import GoogLeNetV1
@@ -20,7 +20,7 @@ from .vgg import VGG11,VGG13,VGG16,VGG19
 
 # imagenet resnet,has pretrained checkpoints
 from .resnet import resnet18,resnet34,resnet50,resnet101,resnet152
-
+from .alexnet import alexnet
 
 def init_weights(net, init_type='kaiming', gain=0.02):
     def init_func(m):
@@ -113,6 +113,9 @@ def get_models(model_name,init_type="kaiming",**kwargs):
         model=VGG16(**kwargs)      
     elif model_name=="VGG19":
         model=VGG19(**kwargs)
+
+    elif model_name == "alexnet":
+        model=alexnet(**kwargs)
     else:
         raise  NotImplementedError("The model {} is not supported !".format(model_name))
 

@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-18 01:04:24
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-20 20:07:33
+# @Last Modified time: 2020-09-22 22:04:42
 
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -15,13 +15,23 @@ from datasets.classification import getDataloader
 import torch
 import math
 
-Models=["EfficientNetB0","GoogLeNetV1","MobileNetV1","MobileNetV2",
-        'PreActResNet18','PreActResNet34','PreActResNet50','PreActResNet101',
-        'ResNet18','ResNet34','ResNet50','ResNet101',
+# Models=["EfficientNetB0","GoogLeNetV1","MobileNetV1","MobileNetV2",
+#         'PreActResNet18','PreActResNet34','PreActResNet50','PreActResNet101',
+#         'ResNet18','ResNet34','ResNet50','ResNet101',
+#         'resnet20','resnet32','resnet44','resnet56','resnet110',
+#         'SENet18','ShuffleNetG2','ShuffleNetG3',
+#         'ShuffleNetV2_0_5','ShuffleNetV2_1','ShuffleNetV2_1_5','ShuffleNetV2_2',
+#         'VGG11','VGG13','VGG16','VGG19']
+
+
+Models=["GoogLeNetV1",
         'resnet20','resnet32','resnet44','resnet56','resnet110',
-        'SENet18','ShuffleNetG2','ShuffleNetG3',
-        'ShuffleNetV2_0_5','ShuffleNetV2_1','ShuffleNetV2_1_5','ShuffleNetV2_2',
-        'VGG11','VGG13','VGG16','VGG19']
+        'SENet18'
+        'VGG11','VGG13','VGG16','VGG19',
+        'alexnet']
+
+
+
 
 # Count the calculations and parameters of common models
 def paramsFlopsCounter(models,num_classes=10,input_shape=(3,32,32)):
@@ -245,7 +255,7 @@ def SQNRComputer(data,weight=True):
 
 
 if __name__ == '__main__':
-    paramsFlopsCounter(Models,10,(3,64,64))
+    paramsFlopsCounter(Models,1000,(3,224,244))
     # checkpoint=r"./checkpoints/vgg13_cifar10_300_128_0.007_1/ckpts/vgg13_best.pth.tar"
     # save_path=r"./histogram"
     # cifar10=getDataloader("cifar10","val",64,

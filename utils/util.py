@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 21:45:09
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 11:54:34
+# @Last Modified time: 2020-09-22 21:57:49
 import torch.nn as nn 
 import os 
 import logging
@@ -58,7 +58,7 @@ def get_logger(log_dir):
     log_format = '%(asctime)s %(message)s'
     logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                         format=log_format, datefmt='%m/%d %I:%M:%S %p')
-    fh = logging.FileHandler(os.path.join(log_dir, 'run.log'))
+    fh = logging.FileHandler(os.path.join(log_dir, '3x224x244info.log'))
     fh.setFormatter(logging.Formatter(log_format))
     logger = logging.getLogger('Train informations')
     logger.addHandler(fh)

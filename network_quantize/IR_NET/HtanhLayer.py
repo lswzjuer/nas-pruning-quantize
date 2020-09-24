@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-20 20:16:21
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-21 14:15:26
+# @Last Modified time: 2020-09-21 16:05:40
 import torch
 import torch.nn as nn
 from torch.autograd import Function
@@ -70,11 +70,6 @@ class alphaHtanhLayer(nn.Module):
             self.alpha = self.alpha.to(input.device)
         alpha_input = alphaHtanHFunc().apply(input, self.alpha)
         return alpha_input
-
-
-
-
-
 
 
 

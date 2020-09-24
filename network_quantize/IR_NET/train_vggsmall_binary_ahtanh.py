@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-21 13:02:40
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-21 15:47:53
+# @Last Modified time: 2020-09-21 15:58:56
 
 import numpy as np 
 import sys
@@ -306,10 +306,10 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors,
         optimizer.zero_grad()
         loss.backward()
 
-        # vis alpha param`s value and it`s grad
-        for pname,p in model.named_parameters():
-            if "nonlinear" in pname:
-                print("{}  oldvalue:{}  currentgrad:{}".format(pname, p, p.grad))
+        # # vis alpha param`s value and it`s grad
+        # for pname,p in model.named_parameters():
+        #     if "nonlinear" in pname:
+        #         print("{}  oldvalue:{}  currentgrad:{}".format(pname, p, p.grad))
 
                 
         # update alpha and weights
