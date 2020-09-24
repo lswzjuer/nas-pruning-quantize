@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-20 00:18:13
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-21 15:59:28
+# @Last Modified time: 2020-09-24 21:36:18
 
 
 # -*- coding: utf-8 -*-
@@ -284,11 +284,9 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors,
         loss = criterion(outputs, targets)
 
 
-        # sqnr weight quantization loss
-        for name,param in model.named_parameters():
+        # # sqnr weight quantization loss
+        # for name,param in model.named_parameters():
             
-
-
 
         acc1, acc5 = accuracy(outputs.data, targets.data, topk=(1, 5))
         losses.update(loss.item(), inputs.size(0))
