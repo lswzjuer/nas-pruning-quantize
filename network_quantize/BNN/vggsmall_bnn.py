@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-26 17:02:17
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-26 17:45:32
+# @Last Modified time: 2020-09-26 22:09:32
 
 import torch 
 import torch.nn as nn
@@ -26,8 +26,9 @@ class VGG_SMALL_1W1A_CBAP(nn.Module):
         self.conv1 = Layer.BNNConv2d_1w1a(128, 128, kernel_size=3, padding=1, bias=False)
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.bn1 = nn.BatchNorm2d(128)
-        self.nonlinear = nn.ReLU(inplace=True)
+        # self.nonlinear = nn.ReLU(inplace=True)
         # self.nonlinear = nn.Hardtanh(inplace=True)
+        # must be none
         self.conv2 = Layer.BNNConv2d_1w1a(128, 256, kernel_size=3, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(256)
         self.conv3 = Layer.BNNConv2d_1w1a(256, 256, kernel_size=3, padding=1, bias=False)
@@ -63,11 +64,11 @@ class VGG_SMALL_1W1A_CBAP(nn.Module):
     def forward(self, x):
         x = self.conv0(x)
         x = self.bn0(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
 
         x = self.conv1(x)
         x = self.bn1(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
         x = self.pooling(x)
 
         x = self.conv2(x)
@@ -76,16 +77,16 @@ class VGG_SMALL_1W1A_CBAP(nn.Module):
 
         x = self.conv3(x)
         x = self.bn3(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
         x = self.pooling(x)
 
         x = self.conv4(x)
         x = self.bn4(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
 
         x = self.conv5(x)
         x = self.bn5(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
         x = self.pooling(x)
 
         # for tiny imagenet
@@ -109,8 +110,9 @@ class VGG_SMALL_1W1A(nn.Module):
         self.conv1 = Layer.BNNConv2d_1w1a(128, 128, kernel_size=3, padding=1, bias=False)
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.bn1 = nn.BatchNorm2d(128)
-        self.nonlinear = nn.ReLU(inplace=True)
+        # self.nonlinear = nn.ReLU(inplace=True)
         # self.nonlinear = nn.Hardtanh(inplace=True)
+        # must be none, relu or htanh is hamful
         self.conv2 = Layer.BNNConv2d_1w1a(128, 256, kernel_size=3, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(256)
         self.conv3 = Layer.BNNConv2d_1w1a(256, 256, kernel_size=3, padding=1, bias=False)
@@ -146,30 +148,30 @@ class VGG_SMALL_1W1A(nn.Module):
     def forward(self, x):
         x = self.conv0(x)
         x = self.bn0(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
 
         x = self.conv1(x)
         x = self.pooling(x)
         x = self.bn1(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
 
         x = self.conv2(x)
         x = self.bn2(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
 
         x = self.conv3(x)
         x = self.pooling(x)
         x = self.bn3(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
 
         x = self.conv4(x)
         x = self.bn4(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
 
         x = self.conv5(x)
         x = self.pooling(x)
         x = self.bn5(x)
-        x = self.nonlinear(x)
+        # x = self.nonlinear(x)
         # for tiny imagenet
         if self.num_classes==200:
             x = self.pooling(x)
@@ -245,7 +247,7 @@ class VGG_SMALL_1W32A(nn.Module):
         x = self.conv4(x)
         x = self.bn4(x)
         x = self.nonlinear(x)
-        
+
         x = self.conv5(x)
         x = self.pooling(x)
         x = self.bn5(x)
