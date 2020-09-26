@@ -1,6 +1,8 @@
 checkpoints
 histogram
 ./network_quantize/checkpoints
+./network_quantize/XNOR/Vgg_simple
+./network_quantize/XNOR/xnor_pytorch_old
 *.pyc
 *.xml
 *.iml

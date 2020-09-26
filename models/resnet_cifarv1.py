@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:56:30
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 12:45:51
+# @Last Modified time: 2020-09-25 17:09:05
 
 '''ResNet in PyTorch.
 

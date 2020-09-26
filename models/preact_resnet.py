@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 18:00:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 12:45:06
+# @Last Modified time: 2020-09-25 17:09:06
 
 '''Pre-activation ResNet in PyTorch.
 Reference:

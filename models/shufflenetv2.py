@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:59:02
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 12:48:19
+# @Last Modified time: 2020-09-25 17:09:06
 '''ShuffleNetV2 in PyTorch.
 
 See the paper "ShuffleNet V2: Practical Guidelines for Efficient CNN Architecture Design" for more details.
