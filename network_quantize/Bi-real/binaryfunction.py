@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 22:14:08
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-29 13:06:54
+# @Last Modified time: 2020-09-26 16:23:56
 
 import torch
 import torch.nn as nn
@@ -113,12 +113,6 @@ class BinaryActionFunc(Function):
         grad_input = grad_output.clone()
         grad_input[torch.abs(input) > 1.001] = 0
         return grad_input
-
-
-
-
-
-
 
 
 if __name__ == '__main__':

@@ -2,14 +2,13 @@
 # @Author: liusongwei
 # @Date:   2020-09-26 15:11:39
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-29 13:16:00
+# @Last Modified time: 2020-09-26 16:58:40
 
 import torch 
 import torch.nn as nn 
 import torch.autograd.function as Function
 import torch.nn.functional as F
 import binaryfunction
-
 
 
 
@@ -72,6 +71,9 @@ class XNORDense_1w1a(nn.Linear):
         scale_binput = binput * si
         output = F.linear(input=scale_binput, weight=scale_bw, bias=self.bias)
         return output
+
+
+
 
 
 
