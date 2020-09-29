@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-26 17:02:17
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-29 13:59:45
+# @Last Modified time: 2020-09-29 14:31:38
 
 import torch 
 import torch.nn as nn
@@ -483,10 +483,7 @@ class VGG_SMALL_1W1A_DENSE(nn.Module):
         # after binary scale and shift
         x = self.bn6(x)
         x = self.scaleshift(x)
-
         return x
-
-
 
 
 

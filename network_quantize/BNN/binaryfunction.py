@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 17:07:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-29 13:04:21
+# @Last Modified time: 2020-09-29 14:33:43
 
 
 '''
@@ -42,12 +42,25 @@ class BinaryFunc(Function):
         return grad_input
 
 
+class BinaryFuncv2(Function):
+    """
+    Binarizarion deterministic op with backprob.\n
+    Forward : \n
+    :math:`r_b  = sign(r)`\n  tanh2x 
+    Backward : \n
+    :math:`d r_b/d r = d tanh2r / d r`
+    """
+    @staticmethod
+    def forward(ctx, input):
+        ctx.save_for_backward(input)
+        out = safeSign(input)
+        return out
 
-
-
-
-
-
+    @staticmethod
+    def backward(ctx, grad_output):
+        input = ctx.saved_tensors
+        grad_input = 2 * (1 - torch.pow(torch.tanh(input * 2), 2)) * grad_output
+        return grad_input
 
 
 if __name__ == '__main__':

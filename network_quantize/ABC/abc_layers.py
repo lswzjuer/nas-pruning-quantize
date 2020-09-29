@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 21:49:54
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-27 21:17:24
+# @Last Modified time: 2020-09-29 21:59:11
 
 
 
@@ -29,6 +29,7 @@ class BNNConv2d_1w1a(nn.Conv2d):
 
     def forward(self, input):
         #  get many input 
+        
         binput = binaryfunction.BinaryFunc().apply(input)
         bweight = binaryfunction.BinaryFunc().apply(self.weight)
         outputs = []
