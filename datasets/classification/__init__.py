@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-15 23:58:45
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 00:42:22
+# @Last Modified time: 2020-10-03 22:01:22
 
 from torch.utils.data import DataLoader
 import torchvision
@@ -80,7 +80,7 @@ def getTransform(dataset,flag,cutout=False):
 
         transform = transforms.Compose(
             [transforms.ToTensor(),
-             transforms.Normalize((0.1307), (0.3081))
+             transforms.Normalize(mean=[0.1307], std=[0.3081])
              ])
 
     elif dataset=="stl10":
@@ -95,8 +95,10 @@ def getTransform(dataset,flag,cutout=False):
             length = 112
         elif dataset == "tiny_imagenet":
             length = 32
-        else:
+        elif dataset in  ["cifar10","cifar100","svhn"]:
             length = 16
+        else:
+            length = 8
         transform.transforms.append(tf.Cutout(length=length,n_holes=1))
 
     return transform

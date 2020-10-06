@@ -2,9 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-30 00:20:03
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-06 23:09:37
-
-
+# @Last Modified time: 2020-10-06 23:29:41
 import numpy as np 
 import sys
 import os 
@@ -17,8 +15,9 @@ import random
 import math
 import logging
 import torch.backends.cudnn as cudnn
+import binaryfunction
 
-from lenet_base_cbap import Lenet as Lenet1
+from lenet_base_cbap import Lenet as  Lenet1
 from lenet_base_cbap_res import Lenet as Lenet2
 from lenet_base_cbap_1w1a import Lenet as Lenet3
 from lenet_base_cbap_1w1a_res import Lenet as Lenet4
@@ -46,6 +45,7 @@ model_dict={
 }
 
 def getArgs():
+    
     parser=argparse.ArgumentParser("Train network in cifar10/100/svhn/mnist/tiny_imagenet")
     # model and train setting
     parser.add_argument('--model',default="lenet_base_cbap",help="binary resnet models")
@@ -65,8 +65,13 @@ def getArgs():
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                         help='momentum')
-    parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
+    parser.add_argument('--weight-decay', '--wd', default=0, type=float,
                         metavar='W', help='weight decay (default: 1e-4)')
+    parser.add_argument('--weight_regloss',default=0.0001, type=float,
+                        metavar='W', help='weight  regularization loss weight ')
+    parser.add_argument('--weight_sqnrloss',default=0.0001, type=float,
+                        metavar='W', help='weight  regularization loss weight ')
+
     parser.add_argument('--workers',type=int,default=4,help="dataloader num_workers")
     parser.add_argument("--pin_memory",type=bool,default=True,help="dataloader cache ")
     parser.add_argument('--cutout',default=False, action='store_true')
@@ -268,10 +273,28 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors,
         targets = targets.to(args.device)
 
         outputs = model(inputs)
-        loss = criterion(outputs, targets)
+        closs = criterion(outputs, targets)
+
+
+        #  weight regularzation loss
+        regularzation_loss = 0
+        for name,param in model.named_parameters():
+            regularzation_loss += torch.sum(torch.pow(1.0-torch.abs(param),2))
+
+
+        # sqnr losss of weight
+        sqnr_loss = 0
+        for name,param in model.named_parameters():
+            if "conv" in name.lower() and "weight" in name.lower():
+                bparam = binaryfunction.BinaryFunc().apply(param)
+                sqnr_loss += 10 * torch.log10(torch.sum(torch.pow(param,2)) / (torch.sum(torch.pow(param-bparam,2))+1e-5))
+        sqnr_loss = sqnr_loss *(-1)
+
+        loss = closs.item() + args.weight_regloss * regularzation_loss + args.weight_sqnrloss * sqnr_loss
+        
 
         acc1, acc5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-        losses.update(loss.item(), inputs.size(0))
+        losses.update(loss, inputs.size(0))
         top1.update(acc1.item(), inputs.size(0))
         top5.update(acc5.item(), inputs.size(0))
 
@@ -287,6 +310,9 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors,
             for m in monitors:
                 m.update(epoch, batch_idx + 1, steps_per_epoch, 'Training', {
                     'Loss': losses,
+                    "Closs" : closs,
+                    "Regloss" : regularzation_loss,
+                    "Sqnrloss" : sqnr_loss,                
                     'Top1': top1,
                     'Top5': top5,
                     'BatchTime': batch_time,
@@ -318,10 +344,28 @@ def validate(data_loader, model, criterion, epoch, monitors, args,logger):
             targets = targets.to(args.device)
 
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            closs = criterion(outputs, targets)
+
+
+            #  weight regularzation loss
+            regularzation_loss = 0
+            for name,param in model.named_parameters():
+                regularzation_loss += torch.sum(torch.pow(1.0-torch.abs(param),2))
+
+
+            # sqnr losss of weight
+            sqnr_loss = 0
+            for name,param in model.named_parameters():
+                if "conv" in name.lower() and "weight" in name.lower():
+                    bparam = binaryfunction.BinaryFunc().apply(param)
+                    sqnr_loss += 10 * torch.log10(torch.sum(torch.pow(param,2)) / (torch.sum(torch.pow(param-bparam,2))+1e-5))
+            sqnr_loss = sqnr_loss *(-1)
+
+            loss = closs.item() + args.weight_regloss * regularzation_loss + args.weight_sqnrloss * sqnr_loss
+        
 
             acc1, acc5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-            losses.update(loss.item(), inputs.size(0))
+            losses.update(loss, inputs.size(0))
             top1.update(acc1.item(), inputs.size(0))
             top5.update(acc5.item(), inputs.size(0))
             batch_time.update(time.time() - end_time)
@@ -331,6 +375,9 @@ def validate(data_loader, model, criterion, epoch, monitors, args,logger):
                 for m in monitors:
                     m.update(epoch, batch_idx + 1, steps_per_epoch, 'Validation', {
                         'Loss': losses,
+                        "Closs" : closs,
+                        "Regloss" : regularzation_loss,
+                        "Sqnrloss" : sqnr_loss,   
                         'Top1': top1,
                         'Top5': top5,
                         'BatchTime': batch_time

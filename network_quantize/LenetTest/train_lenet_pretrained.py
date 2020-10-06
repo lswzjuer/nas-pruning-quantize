@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-30 00:20:03
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-06 23:09:37
+# @Last Modified time: 2020-10-06 23:27:33
 
 
 import numpy as np 
@@ -138,7 +138,7 @@ def main():
     #                                     num_classes=args.class_num,
     #                                     binarynum=args.binarynum)
 
-    model = model_dict[args.model](num_classes=args.class_num,binarynum=args.binarynum)
+    model = Lenet(num_classes=args.class_num,binarynum=args.binarynum)
 
     logger.info("model is:{} \n".format(model))
 
@@ -179,12 +179,8 @@ def main():
 
     # resume 
     start_epoch=0
-    if args.resume:
-        if os.path.isfile(args.resume_path):
-            model,extras,start_epoch=loadCheckpoint(args.resume_path,model,args)
-            optimizer,scheduler,perf_scoreboard=extras["optimizer"],extras['scheduler'],extras["perf_scoreboard"]
-        else:
-            raise FileNotFoundError("No checkpoint found at '{}'".format(args.resume))
+    assert os.path.isfile(args.resume_path):
+    model,_,_=loadCheckpoint(args.resume_path,model,args)
 
     # just eval model
     if args.eval:
@@ -195,11 +191,8 @@ def main():
             logger.info('>>>>>>>> Epoch -1 (pre-trained model evaluation)')
             top1, top5, _ = validate(valLoader, model, criterion,
                                              start_epoch - 1, monitors, args,logger)
-            l,board=perf_scoreboard.update(top1, top5, start_epoch - 1)
-            for idx in range(l):
-                score = board[idx]
-                logger.info('Scoreboard best %d ==> Epoch [%d][Top1: %.3f   Top5: %.3f]',
-                                idx + 1, score['epoch'], score['top1'], score['top5'])
+            logger.info(' Model evaluation score==> Epoch [%d][Top1: %.3f   Top5: %.3f]',
+                                 -1, top1, top5)
 
         # start training 
         for epoch in range(start_epoch, args.epochs):

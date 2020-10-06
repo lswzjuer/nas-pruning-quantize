@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 14:06:28
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 00:35:01
+# @Last Modified time: 2020-10-03 21:42:22
 
 class path(object):
     """docstring for paths"""
@@ -11,6 +11,8 @@ class path(object):
         if dataset == 'cifar10':
             return r'F:\source_code\DataSets'
         elif dataset == 'cifar100':
+            return r'F:\source_code\DataSets'
+        elif dataset == 'mnist':
             return r'F:\source_code\DataSets'
         elif dataset == 'svhn':
             return r'F:\source_code\DataSets'
