@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:57:34
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 12:42:26
+# @Last Modified time: 2020-10-09 20:15:54
 
 
 '''EfficientNet in PyTorch.
@@ -49,7 +49,6 @@ class SE(nn.Module):
 
 class Block(nn.Module):
     '''expansion + depthwise + pointwise + squeeze-excitation'''
-
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -151,7 +150,6 @@ class EfficientNet(nn.Module):
         out = swish(self.bn1(self.conv1(x)))
         out = self.layers(out)
         out = self.glopool(out)
-        #out = F.adaptive_avg_pool2d(out, 1)
         out = out.view(out.size(0), -1)
         dropout_rate = self.cfg['dropout_rate']
         if self.training and dropout_rate > 0:

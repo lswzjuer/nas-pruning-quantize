@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-30 00:20:03
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-06 23:29:41
+# @Last Modified time: 2020-10-07 21:30:36
 import numpy as np 
 import sys
 import os 
@@ -45,7 +45,7 @@ model_dict={
 }
 
 def getArgs():
-    
+
     parser=argparse.ArgumentParser("Train network in cifar10/100/svhn/mnist/tiny_imagenet")
     # model and train setting
     parser.add_argument('--model',default="lenet_base_cbap",help="binary resnet models")
@@ -290,11 +290,11 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, monitors,
                 sqnr_loss += 10 * torch.log10(torch.sum(torch.pow(param,2)) / (torch.sum(torch.pow(param-bparam,2))+1e-5))
         sqnr_loss = sqnr_loss *(-1)
 
-        loss = closs.item() + args.weight_regloss * regularzation_loss + args.weight_sqnrloss * sqnr_loss
-        
+        loss = closs + args.weight_regloss * regularzation_loss + args.weight_sqnrloss * sqnr_loss
+        # loss = closs
 
         acc1, acc5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-        losses.update(loss, inputs.size(0))
+        losses.update(loss.item(), inputs.size(0))
         top1.update(acc1.item(), inputs.size(0))
         top5.update(acc5.item(), inputs.size(0))
 
@@ -361,11 +361,11 @@ def validate(data_loader, model, criterion, epoch, monitors, args,logger):
                     sqnr_loss += 10 * torch.log10(torch.sum(torch.pow(param,2)) / (torch.sum(torch.pow(param-bparam,2))+1e-5))
             sqnr_loss = sqnr_loss *(-1)
 
-            loss = closs.item() + args.weight_regloss * regularzation_loss + args.weight_sqnrloss * sqnr_loss
-        
+            loss = closs + args.weight_regloss * regularzation_loss + args.weight_sqnrloss * sqnr_loss
+            # loss = closs
 
             acc1, acc5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-            losses.update(loss, inputs.size(0))
+            losses.update(loss.item(), inputs.size(0))
             top1.update(acc1.item(), inputs.size(0))
             top5.update(acc5.item(), inputs.size(0))
             batch_time.update(time.time() - end_time)

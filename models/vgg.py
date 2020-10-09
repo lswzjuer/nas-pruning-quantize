@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 18:14:54
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-19 16:34:35
+# @Last Modified time: 2020-10-09 14:27:57
 
 '''VGG11/13/16/19 in Pytorch.'''
 
@@ -46,8 +46,6 @@ class VGG(nn.Module):
                            nn.BatchNorm2d(x),
                            nn.ReLU(inplace=True)]
                 in_channels = x
-
-        layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
 
         return nn.Sequential(*layers)
 

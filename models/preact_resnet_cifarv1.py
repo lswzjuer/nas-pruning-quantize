@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 18:00:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-25 17:09:06
+# @Last Modified time: 2020-10-09 19:59:07
 
 '''Pre-activation ResNet in PyTorch.
 Reference:
@@ -69,9 +69,12 @@ class PreActBottleneck(nn.Module):
 
 
 class PreActResNet(nn.Module):
+    # imagenet downsample 32
+    # cifar10 downsample 8
     def __init__(self, block, num_blocks, num_classes=10):
         super(PreActResNet, self).__init__()
         self.in_planes = 64
+        # NOTE: change conv1 stride 2 -> 1 for CIFAR10
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
@@ -90,12 +93,13 @@ class PreActResNet(nn.Module):
 
     def forward(self, x):
         out = self.conv1(x)
+        #  CIFAR10 without first maxplooling layer
+        # out = F.max_pool2d(out,kernel_size=3,stride=2,padding=1)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.glopool(out)
-        #out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out

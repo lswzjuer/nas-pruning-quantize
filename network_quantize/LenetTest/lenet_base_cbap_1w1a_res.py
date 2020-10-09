@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-10-02 21:04:48
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-03 18:16:51
+# @Last Modified time: 2020-10-07 21:53:08
 
 import torch
 import math
@@ -80,7 +80,6 @@ class baseBlock_1w1a_res(nn.Module):
         if self.pooling:
             out = self.pooling(out)
         return out
-
 
 
 

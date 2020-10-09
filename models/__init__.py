@@ -2,24 +2,24 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:11:29
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-22 22:03:47
+# @Last Modified time: 2020-10-09 20:26:44
 from torch.nn import init
 from .efficientnet import EfficientNetB0
 from .googlenet import GoogLeNetV1
 from .mobilenetv1 import MobileNetV1
 from .mobilenetv2 import MobileNetV2
 # modify resnet and preact_resnet to cifar10 from cifar100
-from .preact_resnet import PreActResNet18,PreActResNet34,PreActResNet50,PreActResNet101,PreActResNet152
+from .preact_resnet_cifarv1 import PreActResNet18,PreActResNet34,PreActResNet50,PreActResNet101,PreActResNet152
 from .resnet_cifarv1 import ResNet18,ResNet34,ResNet50,ResNet101,ResNet152
 # customed cifar10-resnet,has pretrained checkpoints
 from .resnet_cifarv2 import resnet20,resnet32,resnet44,resnet56,resnet110,resnet1202
 from .senet import SENet18
-from .shufflenetv1 import ShuffleNetG2,ShuffleNetG3
+from .shufflenetv1 import ShuffleNetG1,ShuffleNetG2,ShuffleNetG3
 from .shufflenetv2 import ShuffleNetV2_0_5,ShuffleNetV2_1,ShuffleNetV2_1_5,ShuffleNetV2_2
 from .vgg import VGG11,VGG13,VGG16,VGG19
 
 # imagenet resnet,has pretrained checkpoints
-from .resnet import resnet18,resnet34,resnet50,resnet101,resnet152
+from .resnet_imagenet import resnet18,resnet34,resnet50,resnet101,resnet152
 from .alexnet import alexnet
 
 def init_weights(net, init_type='kaiming', gain=0.02):
@@ -92,6 +92,8 @@ def get_models(model_name,init_type="kaiming",**kwargs):
     elif model_name=="SENet18":
         model=SENet18(**kwargs)
 
+    elif model_name=="ShuffleNetG1":
+        model=ShuffleNetG1(**kwargs)
     elif model_name=="ShuffleNetG2":
         model=ShuffleNetG2(**kwargs)
     elif model_name=="ShuffleNetG3":

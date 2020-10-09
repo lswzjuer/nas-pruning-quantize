@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-30 00:20:03
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-06 23:27:33
+# @Last Modified time: 2020-10-07 00:07:56
 
 
 import numpy as np 
@@ -138,7 +138,7 @@ def main():
     #                                     num_classes=args.class_num,
     #                                     binarynum=args.binarynum)
 
-    model = Lenet(num_classes=args.class_num,binarynum=args.binarynum)
+    model = model_dict[args.model](num_classes=args.class_num,binarynum=args.binarynum)
 
     logger.info("model is:{} \n".format(model))
 
@@ -179,7 +179,7 @@ def main():
 
     # resume 
     start_epoch=0
-    assert os.path.isfile(args.resume_path):
+    assert os.path.isfile(args.resume_path)
     model,_,_=loadCheckpoint(args.resume_path,model,args)
 
     # just eval model

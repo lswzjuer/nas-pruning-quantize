@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:58:44
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 12:47:26
+# @Last Modified time: 2020-10-09 19:59:45
 '''ShuffleNet in PyTorch.
 
 See the paper "ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices" for more details.
@@ -53,13 +53,16 @@ class Bottleneck(nn.Module):
 
 
 class ShuffleNet(nn.Module):
+    # imagenet downsample 32
+    # cifar10 downsample 8
     def __init__(self, cfg,num_classes=10):
         super(ShuffleNet, self).__init__()
         out_planes = cfg['out_planes']
         num_blocks = cfg['num_blocks']
         groups = cfg['groups']
-
-        self.conv1 = nn.Conv2d(3, 24, kernel_size=1, bias=False)
+        # NOTE: change conv1 stride 2 -> 1 for CIFAR10
+        self.conv1 = nn.Conv2d(3, 24, kernel_size=3,
+                               stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(24)
         self.in_planes = 24
         self.layer1 = self._make_layer(out_planes[0], num_blocks[0], groups)
@@ -79,14 +82,24 @@ class ShuffleNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
+        # CIFAR10 without first maxplooling layer
+        # out = F.max_pool2d(out,kernel_size=3,stride=2,padding=1)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.glopool(out)
-        #out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out
+
+
+def ShuffleNetG1(pretrained=False, progress=True, **kwargs):
+    cfg = {
+        'out_planes': [144,288,576],
+        'num_blocks': [4,8,4],
+        'groups': 1
+    }
+    return ShuffleNet(cfg,**kwargs)
 
 
 def ShuffleNetG2(pretrained=False, progress=True, **kwargs):
@@ -107,8 +120,8 @@ def ShuffleNetG3(pretrained=False, progress=True, **kwargs):
 
 
 def test():
-    net = ShuffleNetG2(num_classes=100)
-    x = torch.randn(1,3,32,32)
+    net = ShuffleNetG1(num_classes=10)
+    x = torch.randn(3,3,32,32)
     y = net(x)
     print(y.size())
 

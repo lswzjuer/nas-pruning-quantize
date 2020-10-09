@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 18:20:54
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-16 21:12:00
+# @Last Modified time: 2020-10-09 17:09:52
 
 
 import torch
@@ -115,7 +115,6 @@ class Bottleneck(nn.Module):
             identity = x
         out += identity
         out = self.relu(out)
-
         return out
 
 

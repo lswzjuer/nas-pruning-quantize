@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 18:06:07
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-20 19:57:37
+# @Last Modified time: 2020-10-09 17:05:59
 
 import torch 
 import torch.nn as nn
@@ -155,7 +155,7 @@ class ResNet(nn.Module):
         self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
-        #self.glopool= nn.AdaptiveAvgPool2d(output_size=(1,1))
+        self.glopool= nn.AdaptiveAvgPool2d(output_size=(1,1))
         self.linear = nn.Linear(64, num_classes)
         #self.bn2 = nn.BatchNorm1d(64)
         self.apply(_weights_init)
@@ -176,8 +176,7 @@ class ResNet(nn.Module):
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        #out = self.glopool(out)
-        out = F.avg_pool2d(out, out.size()[3])
+        out = self.glopool(out)
         out = out.view(out.size(0), -1)
         if isinstance(self.block,BasicBlock_1w1a):
             out=self.bn2(out)

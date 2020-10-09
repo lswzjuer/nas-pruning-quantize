@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:59:02
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-25 17:09:06
+# @Last Modified time: 2020-10-09 19:59:48
 '''ShuffleNetV2 in PyTorch.
 
 See the paper "ShuffleNet V2: Practical Guidelines for Efficient CNN Architecture Design" for more details.
@@ -99,11 +99,13 @@ class DownBlock(nn.Module):
 
 
 class ShuffleNetV2(nn.Module):
+    # imagenet downsample 32
+    # cifar10 downsample 8
     def __init__(self, config,num_classes):
         super(ShuffleNetV2, self).__init__()
         out_channels = config['out_channels']
         num_blocks = config['num_blocks']
-
+        # NOTE: change conv1 stride 2 -> 1 for CIFAR10
         self.conv1 = nn.Conv2d(3, 24, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(24)
@@ -126,13 +128,13 @@ class ShuffleNetV2(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
-        # out = F.max_pool2d(out, 3, stride=2, padding=1)
+        # CIFAR10 without first maxplooling layer
+        # out = F.max_pool2d(out,kernel_size=3,stride=2,padding=1)
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.glopool(out)
-        #out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out
@@ -175,8 +177,8 @@ def ShuffleNetV2_2(pretrained=False, progress=True, **kwargs):
 
 
 def test():
-    net = ShuffleNetV2_0_5(num_classes=100)
-    x = torch.randn(3, 3, 64, 64)
+    net = ShuffleNetV2_2(num_classes=10)
+    x = torch.randn(3, 3, 32, 32)
     y = net(x)
     print(y.shape)
 

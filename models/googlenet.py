@@ -2,12 +2,20 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:58:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-18 12:42:55
+# @Last Modified time: 2020-10-09 19:51:45
 
 '''GoogLeNet with PyTorch.'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+def conv_bn(inp, oup, kernel_size, stride):
+    return nn.Sequential(
+        nn.Conv2d(inp, oup, kernel_size, stride, 1, bias=False),
+        nn.BatchNorm2d(oup),
+        nn.ReLU(inplace=True)
+    )
 
 
 class Inception(nn.Module):
@@ -62,12 +70,16 @@ class Inception(nn.Module):
 class GoogLeNet(nn.Module):
     def __init__(self,num_classes=10):
         super(GoogLeNet, self).__init__()
+        # imagenet conv1 stride2
+        # self.conv1 = conv_bn(3,64,kernel_size=7,stride=2)
+        # self.conv2 = conv_bn(64,192,kernel_size=3,stride=1)
+
+        # cifar10 Go straight to the destination channel
         self.pre_layers = nn.Sequential(
             nn.Conv2d(3, 192, kernel_size=3, padding=1),
             nn.BatchNorm2d(192),
             nn.ReLU(True),
         )
-
         self.a3 = Inception(192,  64,  96, 128, 16, 32, 32)
         self.b3 = Inception(256, 128, 128, 192, 32, 96, 64)
 
@@ -87,7 +99,15 @@ class GoogLeNet(nn.Module):
         self.linear = nn.Linear(1024, num_classes)
 
     def forward(self, x):
+        # imagenet downsmpale 8
+        # out = self.conv1(x)
+        # out = self.maxpool(out)
+        # out = self.conv2(out)
+        # out = self.maxpool(out)
+
+        # cifar10 without downsample
         out = self.pre_layers(x)
+
         out = self.a3(out)
         out = self.b3(out)
         out = self.maxpool(out)
@@ -110,7 +130,7 @@ def GoogLeNetV1(pretrained=False, progress=True, **kwargs):
 
 
 def test():
-    net = GoogLeNetV1(num_classes=100)
+    net = GoogLeNetV1(num_classes=10)
     x = torch.randn(1,3,32,32)
     y = net(x)
     print(y.size())
