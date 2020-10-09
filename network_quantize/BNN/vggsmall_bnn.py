@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-26 17:02:17
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-29 14:31:38
+# @Last Modified time: 2020-10-09 21:01:36
 
 import torch 
 import torch.nn as nn
@@ -139,8 +139,6 @@ class VGG_SMALL_1W1A_CBAP(nn.Module):
 
 
 
-
-
 class VGG_SMALL_1W1A(nn.Module):
 
     def __init__(self, num_classes=10):
@@ -161,6 +159,7 @@ class VGG_SMALL_1W1A(nn.Module):
         self.bn4 = nn.BatchNorm2d(512)
         self.conv5 = Layer.BNNConv2d_1w1a(512, 512, kernel_size=3, padding=1, bias=False)
         self.bn5 = nn.BatchNorm2d(512)
+
         self.fc = nn.Linear(512*4*4, self.num_classes)
         self._initialize_weights()
 
