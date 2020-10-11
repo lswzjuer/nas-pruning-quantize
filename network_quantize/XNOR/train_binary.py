@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # @Author: liusongwei
-# @Date:   2020-09-17 15:06:05
+# @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-11 16:43:59
+# @Last Modified time: 2020-10-11 16:39:29
+
 
 import numpy as np 
 import sys
@@ -14,18 +15,31 @@ import time
 import yaml
 import random
 import math
+import logging
 import torch.backends.cudnn as cudnn
+import mobilenetv2_xnor as networka
+import resnet18_xnor as networkb
+import resnet20_xnor as networkc
+import vggsmall_xnor as networkd
 
+sys.path.append("../../")
 from  utils import *
 from datasets.classification import getDataloader
-from models import get_models
 
+
+ARCH_DICT={
+    "mobilenetv2": networka,
+    "resnet18" : networkb,
+    "resnet20" : networkc,
+    "vggsmall" : networkd
+}
 
 
 def getArgs():
-    parser=argparse.ArgumentParser("Train network in cifar10/100/svhn/mnist")
+    parser=argparse.ArgumentParser("Train network in cifar10/100/svhn/mnist/tiny_imagenet")
     # model and train setting
-    parser.add_argument('--model',default="VGG13",help="network name")
+    parser.add_argument('--arch',default="resnet20",help="binary resnet models")
+    parser.add_argument('--model',default="resnet20_1w1a",help="binary resnet models")
     parser.add_argument('--init_type',default="kaiming",help="weight init func")
     # datasets
     parser.add_argument('--datasets',type=str,default="cifar10",help="datset name")
@@ -36,17 +50,13 @@ def getArgs():
     parser.add_argument('--epochs', default=200, type=int, metavar='N',
                             help='number of total epochs to run')
     parser.add_argument('--batch_size',type=int,default=128,help="batch size")
-    parser.add_argument('--lr', default=0.007, type=float,
-                        metavar='LR', help='initial learning rate')
+    parser.add_argument('--lr', default=0.01, type=float,
+                        metavar='LR', help='initial learning rate  300 COS 0.007')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                         help='momentum')
     parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
-                        metavar='W', help='weight decay (default: 1e-4)')
-    parser.add_argument('--gamma',type=float,default=0.1,help="learning rate decay")
-    parser.add_argument('--optimizer',type=str,default="sgd",choices=["adam","sgd"],help="optimizer")
-    parser.add_argument('--scheduler',type=str,default="cos",choices=["cos","step","mstep"],help="scheduler")
-    parser.add_argument('--step_size',type=int,default=100,help="steplr's step size")
-    parser.add_argument('--workers',type=int,default=4,help="dataloader num_workers")
+                        metavar='W', help='weight decay 0 for bireal network')
+    parser.add_argument('--workers',type=int,default=2,help="dataloader num_workers")
     parser.add_argument("--pin_memory",type=bool,default=True,help="dataloader cache ")
     parser.add_argument('--cutout',default=False, action='store_true')
     parser.add_argument('--eval', action='store_true',
@@ -56,11 +66,14 @@ def getArgs():
     parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                         help='use pre-trained model')
     parser.add_argument('--num_best_scores',type=int,default=5,help="num_best_scores")
-
+    parser.add_argument('--optimizer',type=str,default="sgd",choices=["adam","sgd"],help="optimizer")
+    parser.add_argument('--scheduler',type=str,default="cos",choices=["cos","step","mstep"],help="scheduler")
+    parser.add_argument('--step_size',type=int,default=100,help="steplr's step size")
+    parser.add_argument('--gamma',type=float,default=0.1,help="learning rate decay")
     # recorder and logging
     parser.add_argument('--save-dir', dest='save_dir',
                         help='The directory used to save the trained models',
-                        default='./checkpoints', type=str)
+                        default='../checkpoints/XNOR', type=str)
     parser.add_argument('--postfix',
                         help='model folder postfix',
                         default='1', type=str)
@@ -110,8 +123,10 @@ def main():
         cudnn.benchmark = True
 
     # model 
-    model=get_models(model_name=args.model,init_type=args.init_type,
-                pretrained=args.pretrained, progress=True,num_classes=args.class_num)
+    model = ARCH_DICT[args.arch].__dict__[args.model](pretrained=args.pretrained, 
+                                        progress=True,
+                                        num_classes=args.class_num)
+    logger.info("model is:{} \n".format(model))
 
     if torch.cuda.device_count() > 1 and args.use_cuda:
         logger.info('use: %d gpus', torch.cuda.device_count())
@@ -119,6 +134,7 @@ def main():
 
     # loss and optimazer
     criterion = nn.CrossEntropyLoss()
+
     if args.use_cuda:
         logger.info("load model and criterion to gpu !")
         model=model.to(args.device)
@@ -129,7 +145,7 @@ def main():
                                     momentum=args.momentum,
                                     weight_decay=args.weight_decay)
     elif args.optimizer.lower() == 'adam':
-        optimizer = optim.Adam(model.parameters(), lr=args.lr, 
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,
                                     betas=(0.9, 0.999), 
                                     weight_decay=args.weight_decay)
     else:
@@ -146,6 +162,7 @@ def main():
     
     else:
         NotImplementedError()
+
 
     # best recoder
     perf_scoreboard = PerformanceScoreboard(args.num_best_scores)
@@ -168,7 +185,6 @@ def main():
             logger.info('>>>>>>>> Epoch -1 (pre-trained model evaluation)')
             top1, top5, _ = validate(valLoader, model, criterion,
                                              start_epoch - 1, monitors, args,logger)
-
             l,board=perf_scoreboard.update(top1, top5, start_epoch - 1)
             for idx in range(l):
                 score = board[idx]
@@ -177,7 +193,10 @@ def main():
 
         # start training 
         for epoch in range(start_epoch, args.epochs):
-            logger.info('>>>>>>>> Epoch {} Lr {}'.format(epoch,optimizer.param_groups[0]['lr']))
+            
+            logger.info('>>>> Epoch {} Lr {} '.format(epoch,
+                                                            optimizer.param_groups[0]['lr'],
+                                                            ))
 
             t_top1, t_top5, t_loss = train(trainLoader, model, criterion, optimizer,
                                                    scheduler, epoch, monitors, args,logger)
@@ -187,18 +206,16 @@ def main():
             tbmonitor.writer.add_scalars('Train_vs_Validation/Top1', {'train': t_top1, 'val': v_top1}, epoch)
             tbmonitor.writer.add_scalars('Train_vs_Validation/Top5', {'train': t_top5, 'val': v_top5}, epoch)
 
-
-            # add params
             for name,param in model.named_parameters():
                 if ("conv" in name.lower() or "fc" in name.lower()) and "weight" in name.lower():
                     tbmonitor.writer.add_histogram(name,param.data.cpu(),epoch)
 
-  
             l,board=perf_scoreboard.update(v_top1, v_top5, epoch)
             for idx in range(l):
                 score = board[idx]
                 logger.info('Scoreboard best %d ==> Epoch [%d][Top1: %.3f   Top5: %.3f]',
                                 idx + 1, score['epoch'], score['top1'], score['top5'])
+
 
             is_best = perf_scoreboard.is_best(epoch)
             # save model

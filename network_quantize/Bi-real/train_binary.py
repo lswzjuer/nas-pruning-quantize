@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-26 17:18:25
+# @Last Modified time: 2020-10-11 16:28:04
 
 
 import numpy as np 
@@ -17,18 +17,28 @@ import random
 import math
 import logging
 import torch.backends.cudnn as cudnn
-import vggsmall_xnor as vgg
+import mobilenetv1_bireal as networka
+import resnet18_bireal as networkb
+import resnet20_bireal as networkc
+
 
 sys.path.append("../../")
 from  utils import *
 from datasets.classification import getDataloader
 
 
+ARCH_DICT={
+    "resnet18" : networkb,
+    "resnet20" : networkc,
+    "mobilenetv1": networka,
+}
+
 
 def getArgs():
     parser=argparse.ArgumentParser("Train network in cifar10/100/svhn/mnist/tiny_imagenet")
     # model and train setting
-    parser.add_argument('--model',default="vgg_small_1w1a",help="binary resnet models")
+    parser.add_argument('--arch',default="resnet20",help="binary resnet models")
+    parser.add_argument('--model',default="resnet20_1w1a",help="binary resnet models")
     parser.add_argument('--init_type',default="kaiming",help="weight init func")
     # datasets
     parser.add_argument('--datasets',type=str,default="cifar10",help="datset name")
@@ -36,16 +46,16 @@ def getArgs():
     parser.add_argument('--class_num',type=int,default=10,help="datasets class name")
     parser.add_argument('--flag',type=str,default="train",help="train or eval")
     # lr and train setting
-    parser.add_argument('--epochs', default=300, type=int, metavar='N',
+    parser.add_argument('--epochs', default=200, type=int, metavar='N',
                             help='number of total epochs to run')
     parser.add_argument('--batch_size',type=int,default=128,help="batch size")
-    parser.add_argument('--lr', default=0.007, type=float,
+    parser.add_argument('--lr', default=0.01, type=float,
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                         help='momentum')
-    parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
-                        metavar='W', help='weight decay (default: 1e-4)')
-    parser.add_argument('--workers',type=int,default=4,help="dataloader num_workers")
+    parser.add_argument('--weight-decay', '--wd', default=0, type=float,
+                        metavar='W', help='weight decay 0 for bireal network')
+    parser.add_argument('--workers',type=int,default=2,help="dataloader num_workers")
     parser.add_argument("--pin_memory",type=bool,default=True,help="dataloader cache ")
     parser.add_argument('--cutout',default=False, action='store_true')
     parser.add_argument('--eval', action='store_true',
@@ -54,15 +64,15 @@ def getArgs():
     parser.add_argument('--resume_path',type=str,default="./checkpoint/model_xx",help="traing resume_path")
     parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                         help='use pre-trained model')
-    parser.add_argument('--num_best_scores',type=int,default=10,help="num_best_scores")
+    parser.add_argument('--num_best_scores',type=int,default=5,help="num_best_scores")
     parser.add_argument('--optimizer',type=str,default="sgd",choices=["adam","sgd"],help="optimizer")
-    parser.add_argument('--scheduler',type=str,default="cos",choices=["cos","steplr"],help="scheduler")
+    parser.add_argument('--scheduler',type=str,default="cos",choices=["cos","step","mstep"],help="scheduler")
     parser.add_argument('--step_size',type=int,default=100,help="steplr's step size")
-
+    parser.add_argument('--gamma',type=float,default=0.1,help="learning rate decay")
     # recorder and logging
     parser.add_argument('--save-dir', dest='save_dir',
                         help='The directory used to save the trained models',
-                        default='../checkpoints/XNOR', type=str)
+                        default='../checkpoints/BIREAL', type=str)
     parser.add_argument('--postfix',
                         help='model folder postfix',
                         default='1', type=str)
@@ -80,6 +90,7 @@ def getArgs():
 def main():
     # args
     args=getArgs()
+    args.steplist = [100,150,180]
     # logging
     projectName="{}_{}_{}_{}_{}_{}".format(args.model.lower(),args.datasets,
                                     args.epochs,args.batch_size,
@@ -111,7 +122,7 @@ def main():
         cudnn.benchmark = True
 
     # model 
-    model = vgg.__dict__[args.model](pretrained=args.pretrained, 
+    model = ARCH_DICT[args.arch].__dict__[args.model](pretrained=args.pretrained, 
                                         progress=True,
                                         num_classes=args.class_num)
     logger.info("model is:{} \n".format(model))
@@ -142,8 +153,12 @@ def main():
     if args.scheduler.lower() == "cos":
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs,eta_min=0,last_epoch=-1)
 
-    elif args.scheduler.lower() == "steplr":
+    elif args.scheduler.lower() == "step":
         scheduler=torch.optim.lr_scheduler.StepLR(optimizer=optimizer,step_size=args.step_size,gamma=0.1,last_epoch=-1)
+    
+    elif args.scheduler.lower() == "mstep":
+        scheduler=torch.optim.lr_scheduler.MultiStepLR(optimizer, args.steplist, gamma=args.gamma)
+    
     else:
         NotImplementedError()
 
@@ -189,6 +204,10 @@ def main():
             tbmonitor.writer.add_scalars('Train_vs_Validation/Loss', {'train': t_loss, 'val': v_loss}, epoch)
             tbmonitor.writer.add_scalars('Train_vs_Validation/Top1', {'train': t_top1, 'val': v_top1}, epoch)
             tbmonitor.writer.add_scalars('Train_vs_Validation/Top5', {'train': t_top5, 'val': v_top5}, epoch)
+
+            for name,param in model.named_parameters():
+                if ("conv" in name.lower() or "fc" in name.lower()) and "weight" in name.lower():
+                    tbmonitor.writer.add_histogram(name,param.data.cpu(),epoch)
 
             l,board=perf_scoreboard.update(v_top1, v_top5, epoch)
             for idx in range(l):

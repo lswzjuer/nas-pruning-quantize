@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:56:30
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-11 01:49:36
+# @Last Modified time: 2020-10-11 16:29:07
 
 '''ResNet in PyTorch.
 
@@ -20,6 +20,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 import bireal_layers as Layer
+
+__all__ = ['ResNet18_1w1a', 'ResNet18', 'ResNet34',"ResNet50"]
+
 
 
 
@@ -228,9 +231,6 @@ class ResNet_1w1a(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out
-
-
-
 
 def ResNet18(pretrained=False, progress=True, **kwargs):
     return ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)

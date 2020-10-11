@@ -2,13 +2,21 @@
 # @Author: liusongwei
 # @Date:   2020-09-28 22:59:55
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-10 16:33:37
+# @Last Modified time: 2020-10-11 16:31:02
 
 
 import torch.nn as nn
 import math
 import torch
 import bnn_layers as Layer
+
+
+
+
+__all__ = ['MobileNetV2','MobileNetV2_1w1a']
+
+
+
 
 def conv_bn(inp, oup, stride):
     return nn.Sequential(

@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:56:30
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-11 02:00:36
+# @Last Modified time: 2020-10-11 16:30:20
 
 '''ResNet in PyTorch.
 
@@ -21,6 +21,10 @@ import torch.nn.functional as F
 import bnn_layers as Layer
 import math
 
+
+
+
+__all__ = ['ResNet18_1w1a', 'ResNet18', 'ResNet34',"ResNet50"]
 
 class BasicBlock(nn.Module):
     expansion = 1
