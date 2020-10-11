@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-11 16:41:48
+# @Last Modified time: 2020-10-11 16:53:46
 
 
 import numpy as np 
@@ -83,6 +83,10 @@ def getArgs():
     parser.add_argument('--gpus',type=int,default=1,help="gpu number")
     parser.add_argument('--manualSeed',type=int,default=0,help="default init seed")
 
+    # weight and activate Quantization bits wide
+    parser.add_argument('--wbit',type=int,default=8,help="gpu number")
+    parser.add_argument('--abit',type=int,default=8,help="gpu number")
+
     args = parser.parse_args()
     return args
 
@@ -125,6 +129,8 @@ def main():
     # model 
     model = ARCH_DICT[args.arch].__dict__[args.model](pretrained=args.pretrained, 
                                         progress=True,
+                                        wbit=self.wbit,
+                                        abit=self.abit,
                                         num_classes=args.class_num)
     logger.info("model is:{} \n".format(model))
 
