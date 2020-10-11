@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-26 15:11:39
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-26 16:58:40
+# @Last Modified time: 2020-10-10 01:44:05
 
 import torch 
 import torch.nn as nn 
@@ -13,22 +13,23 @@ import binaryfunction
 
 
 
-class XNORConv2d_1w1a(nn.Conv2d):
+class BiRealConv2d_1w1a(nn.Conv2d):
     '''
-    XNOR 1w1a conv2d layers
+    Bireal 1w1a conv2d layers
     '''
     def __init__(self,in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=False):
-        super(XNORConv2d_1w1a, self).__init__(in_channels,out_channels,
+        super(BiRealConv2d_1w1a, self).__init__(in_channels,out_channels,
                                         kernel_size=kernel_size,stride=stride,padding=padding,
                                         dilation=dilation,groups=groups,bias=bias)
 
     def forward(self, input):
 
         # w_b = a * sign(w)
-        scale_bw = binaryfunction.BinaryWeightFuncV1().apply(self.weight)
+        bw = binaryfunction.BinaryFunc().apply(self.weight)
+        scale_b = self.weight.abs().view(self.weight.size(0), -1).mean(-1).view(self.weight.size(0),1,1,1).detach()
+        scale_bw = bw * scale_b
         # input_b = sign(input)
-        binput = binaryfunction.BinaryActionFunc().apply(input)
-
+        binput = binaryfunction.BinaryFunc().apply(input)
         boutput = F.conv2d(binput, scale_bw,bias=self.bias,
                           stride=self.stride, padding=self.padding,
                           dilation=self.dilation,groups=self.groups)
@@ -55,17 +56,20 @@ class XNORConv2d_1w1a(nn.Conv2d):
 
 
 
-class XNORDense_1w1a(nn.Linear):
+
+class BiRealDense_1w1a(nn.Linear):
     def __init__(self,out_features,bias=True):
-        super(XNORDense_1w1a, self).__init__(out_features=out_features,bias=bias)
+        super(BiRealDense_1w1a, self).__init__(out_features=out_features,bias=bias)
 
     def forward(self, input):
         # w_b = a * sign(w)
         # dim(w)=DimIn*DimOUT  dim(a)= 1*DimOUT
-        scale_bw = binaryfunction.BinaryWeightFuncV1().apply(self.weight)
+        bw = binaryfunction.BinaryFunc().apply(self.weight)
+        scale_b = self.weight.abs().mean(0).view(1,self.weight.size(1)).detach()
+        scale_bw = bw * scale_b
         # input_b = sign(input)
         # dim(input) = N*DimIn
-        binput = binaryfunction.BinaryActionFunc().apply(input)
+        binput = binaryfunction.BinaryFunc().apply(input)
         # dim(a_input) = Nx1
         si = torch.mean(torch.abs(input),dim=1,keepdim=True).detach()
         scale_binput = binput * si
@@ -73,25 +77,18 @@ class XNORDense_1w1a(nn.Linear):
         return output
 
 
-
-
-
-
-
-class XNORConv2d_1w32a(nn.Conv2d):
-    '''
-    XNOR 1w32a conv2d layers
-    '''
+class BiRealConv2d_1w32a(nn.Conv2d):
     def __init__(self,in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=False):
-        super(XNORConv2d_1w32a, self).__init__(in_channels,out_channels,
+        super(BiRealConv2d_1w32a, self).__init__(in_channels,out_channels,
                                         kernel_size=kernel_size,stride=stride,padding=padding,
                                         dilation=dilation,groups=groups,bias=bias)
 
     def forward(self, input):
 
         # w_b = a * sign(w)
-        scale_bw = binaryfunction.BinaryWeightFuncV1().apply(self.weight)
-
+        bw = binaryfunction.BinaryFunc().apply(self.weight)
+        scale_b = self.weight.abs().view(self.weight.size(0), -1).mean(-1).view(self.weight.size(0),1,1,1).detach()
+        scale_bw = bw * scale_b
         boutput = F.conv2d(input, scale_bw,bias=self.bias,
                           stride=self.stride, padding=self.padding,
                           dilation=self.dilation,groups=self.groups)
@@ -100,14 +97,16 @@ class XNORConv2d_1w32a(nn.Conv2d):
 
 
 
-class XNORDense_1w32a(nn.Linear):
+class BiRealDense_1w32a(nn.Linear):
     def __init__(self,out_features,bias=True):
-        super(XNORDense_1w32a, self).__init__(out_features=out_features,bias=bias)
+        super(BiRealDense_1w32a, self).__init__(out_features=out_features,bias=bias)
 
     def forward(self, input):
         # w_b = a * sign(w)
         # dim(w)=DimIn*DimOUT  dim(a)= 1*DimOUT
-        scale_bw = binaryfunction.BinaryWeightFuncV1().apply(self.weight)
+        bw = binaryfunction.BinaryFunc().apply(self.weight)
+        scale_b = self.weight.abs().mean(0).view(1,self.weight.size(1)).detach()
+        scale_bw = bw * scale_b
         output = F.linear(input=input, weight=scale_bw, bias=self.bias)
         return output
 
@@ -115,10 +114,10 @@ class XNORDense_1w32a(nn.Linear):
 
 if __name__ == '__main__':
 
-    testdata = torch.ones((3,1,3,3),requires_grad=True)
-    testdata = testdata * torch.tensor([-2,-0.5,0.5]).unsqueeze(1).unsqueeze(2).unsqueeze(3).expand_as(testdata)
+    testdata = torch.ones((1,3,3,3),requires_grad=True)
+    testdata = testdata * torch.tensor([-2,-0.4,0.4]).unsqueeze(0).unsqueeze(2).unsqueeze(3).expand_as(testdata)
 
-    conv1=XNORConv2d_1w1a(1,1,kernel_size=3,stride=1,padding=1)
+    conv1=BiRealConv2d_1w1a(3,3,kernel_size=3,stride=1,padding=1)
     output=conv1(testdata)
 
     weight = torch.ones(output.size())

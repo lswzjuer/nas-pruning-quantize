@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 22:14:08
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-26 16:23:56
+# @Last Modified time: 2020-10-10 01:33:21
 
 import torch
 import torch.nn as nn
@@ -38,34 +38,7 @@ def getScales(tensor):
         NotImplementedError("Don`t support this layer !")
 
 
-
-
-class BinaryWeightFuncV1(Function):
-    """
-    Binarizarion deterministic op with backprob.\n
-    Forward :
-    :math:    w_b  = a_w * sign(w)
-    Backward : \n
-    :math:`d w_b/d w = a_w * 1_{|w|=<1}`
-    """
-    @staticmethod
-    def forward(ctx, input):
-        binput = safeSign(input)
-        scales = getScales(input)
-        ctx.save_for_backward(input,scales)
-        return scales*binput
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        # grad_output * d w_b/d w = grad_output * a * (d sign(w) /d w)
-        input,scales = ctx.saved_tensors
-        mask = torch.le(torch.abs(input),1.0).to(torch.float32)
-        grad_input = grad_output * scales * mask
-        return grad_input
-
-
-
-class BinaryWeightFuncV2(Function):
+class BinaryWeightFunc(Function):
     """
     Binarizarion deterministic op with backprob.\n
     Forward :
@@ -86,33 +59,35 @@ class BinaryWeightFuncV2(Function):
     def backward(ctx, grad_output):
         # grad_output * d w_b/d w = grad_output *( a * (d sign(w) /d w) + 1/n)
         input,scales = ctx.saved_tensors
-        mask = torch.le(torch.abs(input),1.0).to(torch.float32)
-        # conv2d
-        if input.dim() == 4:
-            channel_num = input.numel()/input.size(0)
-        # dense
-        else:
-            channel_num = input.size(0)
-        grad_input = grad_output * ( scales * mask + 1/channel_num )
-        return grad_input
+        mask1 = input < -1
+        mask2 = input < 0
+        mask3 = input < 1
+        grad_input = 0 * mask1.type(torch.float32) + (input*2 + 2) * (1-mask1.type(torch.float32))
+        grad_input = grad_input * mask2.type(torch.float32) + (-input*2 + 2) * (1-mask2.type(torch.float32))
+        grad_input = grad_input * mask3.type(torch.float32) + 0 * (1- mask3.type(torch.float32))
+        return grad_input * scales 
 
 
 
-
-class BinaryActionFunc(Function):
-
+class BinaryFunc(Function):
     @staticmethod
-    def forward(ctx,input):
+    def forward(ctx, input):
         ctx.save_for_backward(input)
-        binput = safeSign(input)
-        return binput
+        out = safeSign(input)
+        return out
 
     @staticmethod
-    def backward(ctx,grad_output):
+    def backward(ctx, grad_output):
         input, = ctx.saved_tensors
-        grad_input = grad_output.clone()
-        grad_input[torch.abs(input) > 1.001] = 0
+        mask1 = input < -1
+        mask2 = input < 0
+        mask3 = input < 1
+        grad_input = 0 * mask1.type(torch.float32) + (input*2 + 2) * (1-mask1.type(torch.float32))
+        grad_input = grad_input * mask2.type(torch.float32) + (-input*2 + 2) * (1-mask2.type(torch.float32))
+        grad_input = grad_input * mask3.type(torch.float32) + 0 * (1- mask3.type(torch.float32))
         return grad_input
+
+
 
 
 if __name__ == '__main__':
@@ -127,10 +102,10 @@ if __name__ == '__main__':
     # ]]
     # testdata=torch.tensor(testdata,requires_grad=True)
     testdata = torch.ones((3,1,2,2),requires_grad=True)
-    testdata = testdata * torch.tensor([-2,-0.5,0.5]).unsqueeze(1).unsqueeze(2).unsqueeze(3).expand_as(testdata)
-    output=BinaryWeightFuncV2().apply(testdata)
-
-
+    testdata = testdata * torch.tensor([-2,-0.4,0.4]).unsqueeze(1).unsqueeze(2).unsqueeze(3).expand_as(testdata)
+    print(testdata)
+    output=BinaryFunc().apply(testdata)
     weight = torch.ones(output.size())
     grad = torch.autograd.grad(outputs=output,inputs=testdata,grad_outputs=weight)
+    print(grad[0])
 

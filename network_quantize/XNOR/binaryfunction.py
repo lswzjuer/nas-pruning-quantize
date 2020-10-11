@@ -2,13 +2,12 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 22:14:08
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-29 13:06:54
+# @Last Modified time: 2020-10-10 01:20:07
 
 import torch
 import torch.nn as nn
 from torch.autograd import Function
 import torch.nn.functional as F
-
 
 
 
@@ -36,8 +35,6 @@ def getScales(tensor):
         return scales
     else:
         NotImplementedError("Don`t support this layer !")
-
-
 
 
 class BinaryWeightFuncV1(Function):
@@ -93,10 +90,8 @@ class BinaryWeightFuncV2(Function):
         # dense
         else:
             channel_num = input.size(0)
-        grad_input = grad_output * ( scales * mask + 1/channel_num )
+        grad_input = grad_output * ( scales * mask + 1/channel_num)
         return grad_input
-
-
 
 
 class BinaryActionFunc(Function):
@@ -113,6 +108,48 @@ class BinaryActionFunc(Function):
         grad_input = grad_output.clone()
         grad_input[torch.abs(input) > 1.001] = 0
         return grad_input
+
+
+class BinaryFunc(Function):
+    @staticmethod
+    def forward(ctx,input):
+        ctx.save_for_backward(input)
+        binput = safeSign(input)
+        return binput
+
+    @staticmethod
+    def backward(ctx,grad_output):
+        input, = ctx.saved_tensors
+        grad_input = grad_output.clone()
+        grad_input[torch.abs(input) > 1.001] = 0
+        return grad_input
+
+
+class BinaryFuncv2(Function):
+    """
+    Binarizarion deterministic op with backprob.\n
+    Forward : \n
+    :math:`r_b  = sign(r)`\n  tanh2x 
+    Backward : \n
+    :math:`d r_b/d r = d tanh2r / d r`
+    """
+    @staticmethod
+    def forward(ctx, input):
+        ctx.save_for_backward(input)
+        out = safeSign(input)
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        input = ctx.saved_tensors
+        grad_input = 2 * (1 - torch.pow(torch.tanh(input * 2), 2)) * grad_output
+        return grad_input
+
+
+
+
+
+
 
 
 

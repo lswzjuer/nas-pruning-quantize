@@ -2,15 +2,13 @@
 # @Author: liusongwei
 # @Date:   2020-09-26 15:11:39
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-29 13:16:00
+# @Last Modified time: 2020-10-10 01:18:15
 
 import torch 
 import torch.nn as nn 
 import torch.autograd.function as Function
 import torch.nn.functional as F
 import binaryfunction
-
-
 
 
 
@@ -26,16 +24,18 @@ class XNORConv2d_1w1a(nn.Conv2d):
     def forward(self, input):
 
         # w_b = a * sign(w)
-        scale_bw = binaryfunction.BinaryWeightFuncV1().apply(self.weight)
+        bw = binaryfunction.BinaryFunc().apply(self.weight)
+        scale_b = self.weight.abs().view(self.weight.size(0), -1).mean(-1).view(self.weight.size(0),1,1,1).detach()
+        scale_bw = bw * scale_b
         # input_b = sign(input)
-        binput = binaryfunction.BinaryActionFunc().apply(input)
-
+        binput = binaryfunction.BinaryFunc().apply(input)
         boutput = F.conv2d(binput, scale_bw,bias=self.bias,
                           stride=self.stride, padding=self.padding,
                           dilation=self.dilation,groups=self.groups)
         # compute output scale feature map ()
         # Equal to the scaling factor for each activation value of the convolution fast
-        os = self.getScaleFeatureMap(input).detach()
+        os = self.getScaleFeatureMap(input)
+        os = os.detach()
         output = boutput * os
         return output
 
@@ -43,7 +43,6 @@ class XNORConv2d_1w1a(nn.Conv2d):
     def getScaleFeatureMap(self,input):
         # N C H W --> N 1 H W
         # Compute channel abs mean
-
         input_mean = torch.mean(torch.abs(input),dim=1,keepdim=True)
         # N 1 H W ---> N 1 H` W`
         # Calculate the plane mean for each convolution block by convolution
@@ -63,10 +62,12 @@ class XNORDense_1w1a(nn.Linear):
     def forward(self, input):
         # w_b = a * sign(w)
         # dim(w)=DimIn*DimOUT  dim(a)= 1*DimOUT
-        scale_bw = binaryfunction.BinaryWeightFuncV1().apply(self.weight)
+        bw = binaryfunction.BinaryFunc().apply(self.weight)
+        scale_b = self.weight.abs().mean(0).view(1,self.weight.size(1)).detach()
+        scale_bw = bw * scale_b
         # input_b = sign(input)
         # dim(input) = N*DimIn
-        binput = binaryfunction.BinaryActionFunc().apply(input)
+        binput = binaryfunction.BinaryFunc().apply(input)
         # dim(a_input) = Nx1
         si = torch.mean(torch.abs(input),dim=1,keepdim=True).detach()
         scale_binput = binput * si
@@ -88,8 +89,9 @@ class XNORConv2d_1w32a(nn.Conv2d):
     def forward(self, input):
 
         # w_b = a * sign(w)
-        scale_bw = binaryfunction.BinaryWeightFuncV1().apply(self.weight)
-
+        bw = binaryfunction.BinaryFunc().apply(self.weight)
+        scale_b = self.weight.abs().view(self.weight.size(0), -1).mean(-1).view(self.weight.size(0),1,1,1).detach()
+        scale_bw = bw * scale_b
         boutput = F.conv2d(input, scale_bw,bias=self.bias,
                           stride=self.stride, padding=self.padding,
                           dilation=self.dilation,groups=self.groups)
@@ -105,7 +107,9 @@ class XNORDense_1w32a(nn.Linear):
     def forward(self, input):
         # w_b = a * sign(w)
         # dim(w)=DimIn*DimOUT  dim(a)= 1*DimOUT
-        scale_bw = binaryfunction.BinaryWeightFuncV1().apply(self.weight)
+        bw = binaryfunction.BinaryFunc().apply(self.weight)
+        scale_b = self.weight.abs().mean(0).view(1,self.weight.size(1)).detach()
+        scale_bw = bw * scale_b
         output = F.linear(input=input, weight=scale_bw, bias=self.bias)
         return output
 

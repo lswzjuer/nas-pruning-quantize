@@ -2,5 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/network_binary_quantize/Dorefa/DoReFaNet" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/network_binary_quantize/Dorefa/DoReFaNetv1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/network_binary_quantize/pytorch_DoReFaNet" vcs="Git" />
   </component>
 </project>

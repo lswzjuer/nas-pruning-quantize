@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 17:07:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-09-29 14:33:43
+# @Last Modified time: 2020-10-10 00:22:25
 
 
 '''
@@ -61,6 +61,7 @@ class BinaryFuncv2(Function):
         input = ctx.saved_tensors
         grad_input = 2 * (1 - torch.pow(torch.tanh(input * 2), 2)) * grad_output
         return grad_input
+
 
 
 if __name__ == '__main__':
