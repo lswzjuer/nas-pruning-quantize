@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 22:14:08
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-10 01:33:21
+# @Last Modified time: 2020-10-13 14:57:56
 
 import torch
 import torch.nn as nn
@@ -53,7 +53,7 @@ class BinaryWeightFunc(Function):
         binput = safeSign(input)
         scales = getScales(input)
         ctx.save_for_backward(input,scales)
-        return scales*binput
+        return Wscales*binput
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -62,10 +62,10 @@ class BinaryWeightFunc(Function):
         mask1 = input < -1
         mask2 = input < 0
         mask3 = input < 1
-        grad_input = 0 * mask1.type(torch.float32) + (input*2 + 2) * (1-mask1.type(torch.float32))
-        grad_input = grad_input * mask2.type(torch.float32) + (-input*2 + 2) * (1-mask2.type(torch.float32))
-        grad_input = grad_input * mask3.type(torch.float32) + 0 * (1- mask3.type(torch.float32))
-        return grad_input * scales 
+        mask = 0 * mask1.type(torch.float32) + (input*2 + 2) * (1-mask1.type(torch.float32))
+        mask = mask * mask2.type(torch.float32) + (-input*2 + 2) * (1-mask2.type(torch.float32))
+        mask = mask * mask3.type(torch.float32) + 0 * (1- mask3.type(torch.float32))
+        return grad_input * scales * mask
 
 
 
@@ -82,10 +82,10 @@ class BinaryFunc(Function):
         mask1 = input < -1
         mask2 = input < 0
         mask3 = input < 1
-        grad_input = 0 * mask1.type(torch.float32) + (input*2 + 2) * (1-mask1.type(torch.float32))
-        grad_input = grad_input * mask2.type(torch.float32) + (-input*2 + 2) * (1-mask2.type(torch.float32))
-        grad_input = grad_input * mask3.type(torch.float32) + 0 * (1- mask3.type(torch.float32))
-        return grad_input
+        mask = 0 * mask1.type(torch.float32) + (input*2 + 2) * (1-mask1.type(torch.float32))
+        mask = mask * mask2.type(torch.float32) + (-input*2 + 2) * (1-mask2.type(torch.float32))
+        mask = mask * mask3.type(torch.float32) + 0 * (1- mask3.type(torch.float32))
+        return grad_output * mask
 
 
 

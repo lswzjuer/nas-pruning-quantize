@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-11 16:53:46
+# @Last Modified time: 2020-10-18 15:30:06
 
 
 import numpy as np 
@@ -47,10 +47,10 @@ def getArgs():
     parser.add_argument('--class_num',type=int,default=10,help="datasets class name")
     parser.add_argument('--flag',type=str,default="train",help="train or eval")
     # lr and train setting
-    parser.add_argument('--epochs', default=200, type=int, metavar='N',
+    parser.add_argument('--epochs', default=300, type=int, metavar='N',
                             help='number of total epochs to run')
     parser.add_argument('--batch_size',type=int,default=128,help="batch size")
-    parser.add_argument('--lr', default=0.01, type=float,
+    parser.add_argument('--lr', default=0.1, type=float,
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                         help='momentum')
@@ -67,7 +67,7 @@ def getArgs():
                         help='use pre-trained model')
     parser.add_argument('--num_best_scores',type=int,default=5,help="num_best_scores")
     parser.add_argument('--optimizer',type=str,default="sgd",choices=["adam","sgd"],help="optimizer")
-    parser.add_argument('--scheduler',type=str,default="mstep",choices=["cos","step","mstep"],help="scheduler")
+    parser.add_argument('--scheduler',type=str,default="cos",choices=["cos","step","mstep"],help="scheduler")
     parser.add_argument('--step_size',type=int,default=100,help="steplr's step size")
     parser.add_argument('--gamma',type=float,default=0.1,help="learning rate decay")
     # recorder and logging
@@ -95,11 +95,14 @@ def getArgs():
 def main():
     # args
     args=getArgs()
-    args.steplist = [100,150,180]
+    if args.arch != "resnet18":
+        args.steplist = [150,220,260]
+    else:
+        args.steplist = [40,80,120]
     # logging
-    projectName="{}_{}_{}_{}_{}_{}".format(args.model.lower(),args.datasets,
+    projectName="{}_{}_{}_{}_{}_{}and{}_{}".format(args.model.lower(),args.datasets,
                                     args.epochs,args.batch_size,
-                                    args.lr,args.postfix)
+                                    args.lr,args.wbit,args.abit,args.postfix)
     modelDir=os.path.join(args.save_dir,projectName)
     logger = get_logger(modelDir)
     with open(os.path.join(modelDir,"args.yaml"), "w") as yaml_file:  # dump experiment config
@@ -129,8 +132,8 @@ def main():
     # model 
     model = ARCH_DICT[args.arch].__dict__[args.model](pretrained=args.pretrained, 
                                         progress=True,
-                                        wbit=self.wbit,
-                                        abit=self.abit,
+                                        wbit=args.wbit,
+                                        abit=args.abit,
                                         num_classes=args.class_num)
     logger.info("model is:{} \n".format(model))
 

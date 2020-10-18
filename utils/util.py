@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 21:45:09
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-09 20:15:02
+# @Last Modified time: 2020-10-15 15:33:27
 import torch.nn as nn 
 import os 
 import logging
@@ -26,7 +26,6 @@ class CrossEntropyLabelSmooth(nn.Module):
             targets + self.epsilon / self.num_classes
         loss = (-targets * log_probs).mean(0).sum()
         return loss
-
 
 
 def accuracy(output, target, topk=(1,)):

@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-26 15:11:39
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-10 01:18:15
+# @Last Modified time: 2020-10-12 01:07:24
 
 import torch 
 import torch.nn as nn 
@@ -25,7 +25,8 @@ class XNORConv2d_1w1a(nn.Conv2d):
 
         # w_b = a * sign(w)
         bw = binaryfunction.BinaryFunc().apply(self.weight)
-        scale_b = self.weight.abs().view(self.weight.size(0), -1).mean(-1).view(self.weight.size(0),1,1,1).detach()
+        scale_b = torch.mean(torch.abs(self.weight),dim=[1,2,3],keepdim=True).detach()
+        #scale_b = self.weight.abs().view(self.weight.size(0), -1).mean(-1).view(self.weight.size(0),1,1,1).detach()
         scale_bw = bw * scale_b
         # input_b = sign(input)
         binput = binaryfunction.BinaryFunc().apply(input)
@@ -90,7 +91,8 @@ class XNORConv2d_1w32a(nn.Conv2d):
 
         # w_b = a * sign(w)
         bw = binaryfunction.BinaryFunc().apply(self.weight)
-        scale_b = self.weight.abs().view(self.weight.size(0), -1).mean(-1).view(self.weight.size(0),1,1,1).detach()
+        scale_b = torch.mean(torch.abs(self.weight),dim=[1,2,3],keepdim=True).detach()
+        #scale_b = self.weight.abs().view(self.weight.size(0), -1).mean(-1).view(self.weight.size(0),1,1,1).detach()
         scale_bw = bw * scale_b
         boutput = F.conv2d(input, scale_bw,bias=self.bias,
                           stride=self.stride, padding=self.padding,

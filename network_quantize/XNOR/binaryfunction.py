@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 22:14:08
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-10 01:20:07
+# @Last Modified time: 2020-10-18 00:29:46
 
 import torch
 import torch.nn as nn
@@ -141,7 +141,7 @@ class BinaryFuncv2(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        input = ctx.saved_tensors
+        input, = ctx.saved_tensors
         grad_input = 2 * (1 - torch.pow(torch.tanh(input * 2), 2)) * grad_output
         return grad_input
 

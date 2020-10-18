@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 17:07:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-18 00:30:29
+# @Last Modified time: 2020-10-18 00:29:40
 
 
 '''
@@ -61,6 +61,40 @@ class BinaryFuncv2(Function):
         input, = ctx.saved_tensors
         grad_input = 2 * (1 - torch.pow(torch.tanh(input * 2), 2)) * grad_output
         return grad_input
+
+
+
+# torhc.round(torch.clamp(x,0,1))
+class Quantizev1(Function):
+    """docstring for Quantize"""
+    @staticmethod
+    def forward(ctx, input, kbit):
+        scale = float(2**kbit-1)
+        out = torch.round(input * scale) / scale
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+      grad_input = grad_output.clone()
+      return grad_input,None
+
+
+
+
+class Quantizev2(Function):
+    """docstring for Quantize"""
+    @staticmethod
+    def forward(ctx, input):
+        ctx.save_for_backward(input)
+        out = safeSign(input)
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        input, = ctx.saved_tensors
+        grad_input = 2 * (1 - torch.pow(torch.tanh(input * 2), 2)) * grad_output
+        return grad_input
+
 
 
 

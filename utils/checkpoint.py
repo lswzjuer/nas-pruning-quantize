@@ -104,7 +104,6 @@ def loadCheckpoint(model_file,model,args):
     model.load_state_dict(checkpoint['state_dict'])
     return model,extras,epoch
 
-
 def saveCheckpoint(epoch,arch,model,extras,is_best,output_dir):
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)

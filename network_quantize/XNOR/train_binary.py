@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-11 16:39:29
+# @Last Modified time: 2020-10-18 15:30:15
 
 
 import numpy as np 
@@ -47,10 +47,10 @@ def getArgs():
     parser.add_argument('--class_num',type=int,default=10,help="datasets class name")
     parser.add_argument('--flag',type=str,default="train",help="train or eval")
     # lr and train setting
-    parser.add_argument('--epochs', default=200, type=int, metavar='N',
+    parser.add_argument('--epochs', default=300, type=int, metavar='N',
                             help='number of total epochs to run')
     parser.add_argument('--batch_size',type=int,default=128,help="batch size")
-    parser.add_argument('--lr', default=0.01, type=float,
+    parser.add_argument('--lr', default=0.1, type=float,
                         metavar='LR', help='initial learning rate  300 COS 0.007')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                         help='momentum')
@@ -63,6 +63,7 @@ def getArgs():
                         help='evaluate model on validation set')
     parser.add_argument('--resume',action='store_true',default=False,help="traing resume")
     parser.add_argument('--resume_path',type=str,default="./checkpoint/model_xx",help="traing resume_path")
+    
     parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                         help='use pre-trained model')
     parser.add_argument('--num_best_scores',type=int,default=5,help="num_best_scores")
@@ -79,6 +80,7 @@ def getArgs():
                         default='1', type=str)
     parser.add_argument('--save_freq',type=int,default=1,help="how many epoch to save model")
     parser.add_argument('--print_freq',type=int,default=150,help="print_freq")
+    
     # gpus
     parser.add_argument('--gpus',type=int,default=1,help="gpu number")
     parser.add_argument('--manualSeed',type=int,default=0,help="default init seed")
@@ -91,7 +93,10 @@ def getArgs():
 def main():
     # args
     args=getArgs()
-    args.steplist = [100,150,180]
+    if args.arch != "resnet18":
+        args.steplist = [150,220,260]
+    else:
+        args.steplist = [40,80,120]
     # logging
     projectName="{}_{}_{}_{}_{}_{}".format(args.model.lower(),args.datasets,
                                     args.epochs,args.batch_size,
