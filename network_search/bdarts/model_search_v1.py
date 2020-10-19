@@ -139,8 +139,7 @@ class Network(nn.Module):
       self.alphas_normal,
       self.alphas_reduce,
     ]
-
-
+    
   def new(self):
     model_new = Network(self._C, self._num_classes, self._layers, self._criterion).cuda()
     for x, y in zip(model_new.arch_parameters(), self.arch_parameters()):

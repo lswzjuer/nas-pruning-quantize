@@ -2,12 +2,12 @@
 # @Author: liusongwei
 # @Date:   2020-10-13 23:41:53
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-18 23:00:01
+# @Last Modified time: 2020-10-19 17:54:48
 
 import torch 
 import torch.nn as nn 
 import torch.nn.functional as F
-import layers as Layer
+import binary_layers as Layer
 
 
 OPS = {

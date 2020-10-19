@@ -1,5 +1,6 @@
 import os
 import sys
+import yaml
 import time
 import glob
 import numpy as np
@@ -16,13 +17,14 @@ from torch.autograd import Variable
 from model_search_v2 import Network
 
 
-import utils
+import tools
 sys.path.append("../../")
 from  utils import *
 
 
 def get_args():
   parser = argparse.ArgumentParser("Binary nerual networks search")
+  parser.add_argument('--dataset_name', type=str, default='cifar10', help='dataset name')
   parser.add_argument('--dataset', type=str, default='../data', help='location of the data corpus')
   parser.add_argument('--class_num', type=int, default=10, help='num of dataset class')
   parser.add_argument('--epochs', type=int, default=50, help='num of training epochs')
@@ -70,17 +72,13 @@ def get_args():
 
 
 
-def updateBN(model):
-    for m in model.arch_parameters():
-        m.grad.data.add_(0.0001 * torch.sign(m.data))  # L1 norm
-
 
 def main():
   args = get_args()
 
   # get log 
-  args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
-  utils.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
+  args.save = '{}/search-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+  tools.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
   log_format = '%(asctime)s %(message)s'
   logging.basicConfig(stream=sys.stdout, level=logging.INFO,
       format=log_format, datefmt='%m/%d %I:%M:%S %p')
@@ -120,13 +118,19 @@ def main():
   #model = model.freeze_arch_parameters()
   model = model.to(args.device)
   criterion = criterion.to(args.device)
-  logger.info("param size = %fMB", utils.count_parameters_in_MB(model))
+  logger.info("param size = %fMB", tools.count_parameters_in_MB(model))
 
   # get dataloader
-  train_transform, valid_transform = utils._data_transforms_cifar10(args)
-  traindata = dset.CIFAR10(root=args.dataset, train=True, download=False, transform=train_transform)
-  valdata = dset.CIFAR10(root=args.dataset, train=False, download=False, transform=valid_transform)
-  num_train = len(train_data)
+  if args.dataset_name == "cifar10":
+    train_transform, valid_transform = tools._data_transforms_cifar10(args)
+    traindata = dset.CIFAR10(root=args.dataset, train=True, download=False, transform=train_transform)
+    valdata = dset.CIFAR10(root=args.dataset, train=False, download=False, transform=valid_transform)
+  else:
+    train_transform, valid_transform = tools._data_transforms_mnist(args)
+    traindata = dset.MNIST(root=args.dataset, train=True, download=False, transform=train_transform)
+    valdata = dset.MNIST(root=args.dataset, train=False, download=False, transform=valid_transform)
+
+  num_train = len(traindata)
   indices = list(range(num_train))
   split = int(np.floor(args.train_portion * num_train))
   train_queue = torch.utils.data.DataLoader(
@@ -134,7 +138,7 @@ def main():
       sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
       pin_memory=True, num_workers=args.workers)
   valid_queue = torch.utils.data.DataLoader(
-      train_data, batch_size=args.batch_size,
+      traindata, batch_size=args.batch_size,
       sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:num_train]),
       pin_memory=True, num_workers=args.workers)
   valLoader = torch.utils.data.DataLoader(

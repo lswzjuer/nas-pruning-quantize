@@ -1,4 +1,5 @@
 import os
+import yaml
 import sys
 import time
 import glob
@@ -16,13 +17,14 @@ from torch.autograd import Variable
 from model_search_v1 import Network
 
 
-import utils
+import tools
 sys.path.append("../../")
 from  utils import *
 
 
 def get_args():
   parser = argparse.ArgumentParser("Binary nerual networks search")
+  parser.add_argument('--dataset_name', type=str, default='mnist', help='dataset name')
   parser.add_argument('--dataset', type=str, default='../data', help='location of the data corpus')
   parser.add_argument('--class_num', type=int, default=10, help='num of dataset class')
   parser.add_argument('--epochs', type=int, default=200, help='num of training epochs')
@@ -35,10 +37,10 @@ def get_args():
   parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
   parser.add_argument('--weight_decay', type=float, default=1e-4, help='weight decay')
 
-  parser.add_argument('--init_channels', type=int, default=36, help='num of init channels')
+  parser.add_argument('--init_channels', type=int, default=16, help='num of init channels')
   parser.add_argument('--layers', type=int, default=8, help='total number of layers')
   parser.add_argument('--nodes', type=int, default=4, help='middle nodes')
-  parser.add_argument('--group', type=int, default=12, help='group numbers')
+  parser.add_argument('--group', type=int, default=8, help='group numbers')
   parser.add_argument('--stem_multiplier', type=int, default=3, help='stem_multiplier')
   parser.add_argument('--init_type',default="kaiming",help="weight init func")
 
@@ -72,7 +74,7 @@ def main():
   args = get_args()
 
   # get log 
-  args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+  args.save = '{}/search-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
   utils.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
   log_format = '%(asctime)s %(message)s'
   logging.basicConfig(stream=sys.stdout, level=logging.INFO,
@@ -107,18 +109,24 @@ def main():
   criterion = nn.CrossEntropyLoss()
   model = Network(C=args.init_channels,num_classes=args.class_num,layers=args.layers,steps=args.nodes,multiplier=args.nodes,
     stem_multiplier=args.stem_multiplier,group=args.group)
+  model.freeze_arch_parameters()
   if args.multi_gpu:
       logger.info('use: %d gpus', args.gpus)
       model = nn.DataParallel(model)
-  model = model.freeze_arch_parameters()
   model = model.to(args.device)
   criterion = criterion.to(args.device)
-  logger.info("param size = %fMB", utils.count_parameters_in_MB(model))
+  logger.info("param size = %fMB", tools.count_parameters_in_MB(model))
 
   # get dataloader
-  train_transform, valid_transform = utils._data_transforms_cifar10(args)
-  traindata = dset.CIFAR10(root=args.dataset, train=True, download=False, transform=train_transform)
-  valdata = dset.CIFAR10(root=args.dataset, train=False, download=False, transform=valid_transform)
+  if args.dataset_name == "cifar10":
+    train_transform, valid_transform = tools._data_transforms_cifar10(args)
+    traindata = dset.CIFAR10(root=args.dataset, train=True, download=False, transform=train_transform)
+    valdata = dset.CIFAR10(root=args.dataset, train=False, download=False, transform=valid_transform)
+  else:
+    train_transform, valid_transform = tools._data_transforms_mnist(args)
+    traindata = dset.MNIST(root=args.dataset, train=True, download=False, transform=train_transform)
+    valdata = dset.MNIST(root=args.dataset, train=False, download=False, transform=valid_transform)
+
   trainLoader = torch.utils.data.DataLoader(
       traindata, batch_size=args.batch_size,
       pin_memory=True,shuffle=True,num_workers=args.workers)

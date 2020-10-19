@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-10-15 13:36:46
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-17 18:22:07
+# @Last Modified time: 2020-10-19 17:21:57
 import os
 import numpy as np
 import torch
@@ -52,6 +52,18 @@ def _data_transforms_cifar10(args):
   return train_transform, valid_transform
 
 
+def _data_transforms_mnist(args):
+
+  train_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.1307], std=[0.3081]),
+  ])
+
+  valid_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.1307], std=[0.3081]),
+    ])
+  return train_transform, valid_transform
 
 
 def create_exp_dir(path, scripts_to_save=None):
