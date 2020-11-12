@@ -145,11 +145,7 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr):
     target_search = Variable(target_search, requires_grad=False).cuda(async=True)
 
     architect.step(input, target, input_search, target_search, lr, optimizer, unrolled=args.unrolled)
-
-
-
-
-
+    
     optimizer.zero_grad()
     logits = model(input)
     loss = criterion(logits, target)
