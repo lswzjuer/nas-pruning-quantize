@@ -25,6 +25,7 @@ class QuanConv2d(t.nn.Conv2d):
         return self._conv_forward(quantized_act, quantized_weight)
 
 
+
 class QuanLinear(t.nn.Linear):
     def __init__(self, m: t.nn.Linear, quan_w_fn=None, quan_a_fn=None):
         assert type(m) == t.nn.Linear
