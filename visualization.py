@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-18 01:04:24
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-09 20:16:54
+# @Last Modified time: 2020-11-22 19:26:45
 
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -15,14 +15,16 @@ from datasets.classification import getDataloader
 import torch
 import math
 
-Models=["EfficientNetB0","GoogLeNetV1","MobileNetV1","MobileNetV2",
-        'PreActResNet18','PreActResNet34','PreActResNet50','PreActResNet101',
-        'ResNet18','ResNet34','ResNet50','ResNet101',
-        'resnet20','resnet32','resnet44','resnet56','resnet110',
-        'SENet18','ShuffleNetG1','ShuffleNetG2','ShuffleNetG3',
-        'ShuffleNetV2_0_5','ShuffleNetV2_1','ShuffleNetV2_1_5','ShuffleNetV2_2',
-        'VGG11','VGG13','VGG16','VGG19']
+# Models=["EfficientNetB0","GoogLeNetV1","MobileNetV1","MobileNetV2",
+#         'PreActResNet18','PreActResNet34','PreActResNet50','PreActResNet101',
+#         'ResNet18','ResNet34','ResNet50','ResNet101',
+#         'resnet20','resnet32','resnet44','resnet56','resnet110',
+#         'SENet18','ShuffleNetG1','ShuffleNetG2','ShuffleNetG3',
+#         'ShuffleNetV2_0_5','ShuffleNetV2_1','ShuffleNetV2_1_5','ShuffleNetV2_2',
+#         'VGG11','VGG13','VGG16','VGG19',
+#         "GhostNetV1"]
 
+Models = ["GhostNetV1","MobileNetV1","MobileNetV2",'ShuffleNetG1','ShuffleNetV2_1']
 
 # Models=["GoogLeNetV1",
 #         'resnet20','resnet32','resnet44','resnet56','resnet110',
@@ -38,6 +40,7 @@ def paramsFlopsCounter(models,num_classes=10,input_shape=(3,32,32)):
     logger=get_logger("./")
     for modelname in models:
         model=get_models(modelname,num_classes=10)
+        model = model.eval()
         pa1=getParams(model)
         fl1=getFlops(model,input_shape)
         fl2,pa2=get_model_complexity_info(model,input_shape)
@@ -255,7 +258,7 @@ def SQNRComputer(data,weight=True):
 
 
 if __name__ == '__main__':
-    paramsFlopsCounter(Models,10,(3,32,32))
+    paramsFlopsCounter(Models,100,(3,224,224))
     # checkpoint=r"./checkpoints/vgg13_cifar10_300_128_0.007_1/ckpts/vgg13_best.pth.tar"
     # save_path=r"./histogram"
     # cifar10=getDataloader("cifar10","val",64,

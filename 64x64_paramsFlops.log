@@ -1,6 +1,6 @@
 2020-09-20 20:07:50,210 EfficientNetB0  v1: 3.6 M--119.43 MMac  v2: 3.6 M--0.12 GMac
 2020-09-20 20:07:53,290 GoogLeNetV1  v1: 6.17 M--6.09 GMac  v2: 6.17 M--6.14 GMac
-2020-09-20 20:07:54,353 MobileNetV1  v1: 3.22 M--185.39 MMac  v2: 3.22 M--0.19 GMac
+2020-09-20 20:07:54,353 MobileNetV1  v1: 3.22 M/--185.39 MMac  v2: 3.22 M--0.19 GMac
 2020-09-20 20:07:56,188 MobileNetV2  v1: 2.3 M--364.58 MMac  v2: 2.3 M--0.38 GMac
 2020-09-20 20:07:57,157 PreActResNet18  v1: 11.17 M--2.22 GMac  v2: 11.17 M--2.23 GMac
 2020-09-20 20:07:59,097 PreActResNet34  v1: 21.28 M--4.64 GMac  v2: 21.28 M--4.65 GMac

@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:11:29
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-09 20:26:44
+# @Last Modified time: 2020-11-22 17:55:51
 from torch.nn import init
 from .efficientnet import EfficientNetB0
 from .googlenet import GoogLeNetV1
@@ -21,6 +21,8 @@ from .vgg import VGG11,VGG13,VGG16,VGG19
 # imagenet resnet,has pretrained checkpoints
 from .resnet_imagenet import resnet18,resnet34,resnet50,resnet101,resnet152
 from .alexnet import alexnet
+
+from .ghostnet import GhostNetV1
 
 def init_weights(net, init_type='kaiming', gain=0.02):
     def init_func(m):
@@ -54,6 +56,9 @@ def get_models(model_name,init_type="kaiming",**kwargs):
 
     elif model_name=="GoogLeNetV1":
         model=GoogLeNetV1(**kwargs)
+
+    elif model_name=="GhostNetV1":
+        model=GhostNetV1(**kwargs)
 
     elif model_name=="MobileNetV1":
         model=MobileNetV1(**kwargs)

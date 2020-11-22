@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:58:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-09 19:51:45
+# @Last Modified time: 2020-11-22 17:52:33
 
 '''GoogLeNet with PyTorch.'''
 import torch
