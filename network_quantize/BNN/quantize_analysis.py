@@ -3,7 +3,7 @@
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
 # @Last Modified time: 2020-11-16 14:40:10
-
+import copy
 from collections import OrderedDict
 import numpy as np 
 import sys
@@ -22,7 +22,7 @@ import resnet18_bnn as networkb
 import resnet20_bnn as networkc
 import vggsmall_bnn as networkd
 from quantize_func import *
-
+import pickle
 sys.path.append("../../")
 from  utils import *
 from datasets.classification import getDataloader
@@ -42,8 +42,12 @@ def getArgs():
     # parser.add_argument('--arch',default="vggsmall",help="binary resnet models")
     # parser.add_argument('--model',default="vgg_small",help="binary resnet models")
 
-    parser.add_argument('--arch',default="resnet20",help="binary resnet models")
-    parser.add_argument('--model',default="resnet20",help="binary resnet models")
+    # parser.add_argument('--arch',default="resnet20",help="binary resnet models")
+    # parser.add_argument('--model',default="resnet20",help="binary resnet models")
+
+    parser.add_argument('--arch',default="resnet18",help="binary resnet models")
+    parser.add_argument('--model',default="ResNet18",help="binary resnet models")
+
 
     parser.add_argument('--init_type',default="kaiming",help="weight init func")
     # datasets
@@ -125,7 +129,7 @@ def main():
         args.manualSeed = random.randint(1, 10000)
     np.random.seed(args.manualSeed)
     torch.manual_seed(args.manualSeed)
-    args.device = torch.device('cpu')
+    args.device = torch.device('cuda')
     # model 
     model = ARCH_DICT[args.arch].__dict__[args.model](pretrained=args.pretrained, 
                                         progress=True,
@@ -141,6 +145,14 @@ def main():
 
     # # resume
     # assert args.resume == True
+    # args.resume_path = r"F:\source_code\nas-pruning-quantize\network_quantize\checkpoints\BNN\resnet20_cifar10_300_128_0.1_mstep\ckpts\resnet20_best.pth.tar"
+    
+    # args.resume_path = r"F:\source_code\nas-pruning-quantize\network_quantize\checkpoints\BNN\vgg_small_cifar10_300_128_0.1_mstep\ckpts\vgg_small_best.pth.tar"
+    
+    args.resume_path = r"F:\source_code\nas-pruning-quantize\network_quantize\checkpoints\BNN\resnet18_cifar10_150_128_0.1_mstep_d8\ckpts\resnet18_best.pth.tar"
+  
+
+
     model,extras,start_epoch=loadCheckpoint(args.resume_path,model,args)
     _,_,_=extras["optimizer"],extras['scheduler'],extras["perf_scoreboard"]
 
@@ -152,13 +164,16 @@ def main():
     # 量化bits[8,6,5,4,3,2,1]
     # 逐层进行量化
     # vggsmall,resnet18,resnet20
-    careops = ["Conv2d"]
+    careops = ["Conv2d","Linear"]
     testbits = [8,7,6,5,4,3,2,1]
     quantityOps = findQuantityOps(model,careops)
     # 生成各个bit的逐层量化方案
     quantityinfo = createQuantityInfo(quantityOps,testbits)
     # 根据生成的量化方案执行量化分析，查看逐层量化时的准确率和loss变化情况
-    quantityAnalysis(model,quantityOps,quantityinfo, valLoader, criterion, args)
+    validateDict = quantityAnalysis(model,quantityOps,quantityinfo, valLoader, criterion, args)
+    file = "./{}.pkl".format(args.model)
+    with open(file,"wb") as f:
+        pickle.dump(validateDict,f)
 
 
 
@@ -236,15 +251,86 @@ def quantityAnalysis(model,quantityOps,quantityinfo,valLoader, criterion, args):
     layers = list(quantityinfo[bits[0]].keys())
     validateDict = {}
     for qbit in bits:
+        qblist=[]
+        qbloss=[]
         for lindex in layers:
             # print("Quantity:{} bit and Layer:{} ".format(qbit,lindex))
             wadict = quantityinfo[qbit][lindex]
             wbits,abits = wadict["w"],wadict["a"]
             modulereplaces= getQuantityOps(model,quantityOps,wbits,abits)
-            newmodel = replaceModuleByNames(model.copy(),quantityOps,modulereplaces)
+            newmodel = replaceModuleByNames(copy.deepcopy(model),quantityOps,modulereplaces)
             tp1,tp5,loss = validate(valLoader, newmodel, criterion, args)
+            qblist.append(tp1)
+            qbloss.append(loss)
             print("Bit:{}  layer:{}  Top1:{} ".format(qbit,lindex,tp1))
+        validateDict[qbit]=[qblist,qbloss]
+    plotpic(validateDict)
+    return validateDict
 
+
+
+def plotpic(validateDict):
+    import numpy as np 
+    import matplotlib.pyplot as plt
+    colorlist=["black","lightcoral","orange","chocolate","gold","green","blue","red"]
+    fig = plt.figure()
+    # add subplot1
+    sub1 = fig.add_subplot(1, 1, 1)
+    sub1.set_title("QuantityAcc ",y=1.1)
+    sub1.plot(range(len(validateDict[8][0])),validateDict[8][0],color = colorlist[0], linewidth = 2.0, linestyle = '-',
+              label=r"$8 bit$")
+    sub1.plot(range(len(validateDict[7][0])),validateDict[7][0],color = colorlist[1], linewidth = 2.0, linestyle = '-',
+              label=r"$7 bit$")
+    sub1.plot(range(len(validateDict[6][0])),validateDict[6][0],color = colorlist[2], linewidth = 2.0, linestyle = '-',
+              label=r"$6 bit$")
+    sub1.plot(range(len(validateDict[5][0])),validateDict[5][0],color = colorlist[3], linewidth = 2.0, linestyle = '-',
+              label=r"$5 bit$")
+    sub1.plot(range(len(validateDict[4][0])),validateDict[4][0],color = colorlist[4], linewidth = 2.0, linestyle = '-',
+              label=r"$4 bit$") 
+    sub1.plot(range(len(validateDict[3][0])),validateDict[3][0],color = colorlist[5], linewidth = 2.0, linestyle = '-',
+              label=r"$3 bit(.)$")
+    sub1.plot(range(len(validateDict[2][0])),validateDict[2][0],color = colorlist[6], linewidth = 2.0, linestyle = '-',
+              label=r"$2 bit(.)$")
+    sub1.plot(range(len(validateDict[1][0])),validateDict[1][0],color = colorlist[7], linewidth = 2.0, linestyle = '-',
+              label=r"$1 bit$")
+    sub1.set_xlabel('Layer Index')
+    sub1.set_ylabel('$Accuracy$')
+    sub1.grid(linestyle='-.')
+    handles, labels = sub1.get_legend_handles_labels()
+    # reverse the order
+    sub1.legend(loc=4)
+    plt.savefig("./quantitlayer_acc.png")
+    plt.close()
+
+
+    fig = plt.figure()
+    # add subplot1
+    sub1 = fig.add_subplot(1, 1, 1)
+    sub1.set_title("QuantityLoss ",y=1.1)
+    sub1.plot(range(len(validateDict[8][1])),validateDict[8][1],color = colorlist[0], linewidth = 2.0, linestyle = '-',
+              label=r"$8 bit$")
+    sub1.plot(range(len(validateDict[7][1])),validateDict[7][1],color = colorlist[1], linewidth = 2.0, linestyle = '-',
+              label=r"$7 bit$")
+    sub1.plot(range(len(validateDict[6][1])),validateDict[6][1],color = colorlist[2], linewidth = 2.0, linestyle = '-',
+              label=r"$6 bit$")
+    sub1.plot(range(len(validateDict[5][1])),validateDict[5][1],color = colorlist[3], linewidth = 2.0, linestyle = '-',
+              label=r"$5 bit$")
+    sub1.plot(range(len(validateDict[4][1])),validateDict[4][1],color = colorlist[4], linewidth = 2.0, linestyle = '-',
+              label=r"$4 bit$") 
+    sub1.plot(range(len(validateDict[3][1])),validateDict[3][1],color = colorlist[5], linewidth = 2.0, linestyle = '-',
+              label=r"$3 bit(.)$")
+    sub1.plot(range(len(validateDict[2][1])),validateDict[2][1],color = colorlist[6], linewidth = 2.0, linestyle = '-',
+              label=r"$2 bit(.)$")
+    sub1.plot(range(len(validateDict[1][1])),validateDict[1][1],color = colorlist[7], linewidth = 2.0, linestyle = '-',
+              label=r"$1 bit$")
+    sub1.set_xlabel('Layer Index')
+    sub1.set_ylabel('$Loss$')
+    sub1.grid(linestyle='-.')
+    handles, labels = sub1.get_legend_handles_labels()
+    # reverse the order
+    sub1.legend(loc=4)
+    plt.savefig("./quantitlayer_loss.png")
+    plt.close()
 
 
 
@@ -255,6 +341,8 @@ def validate(data_loader, model, criterion, args):
     total_sample = len(data_loader.sampler)
     batch_size = data_loader.batch_size
     steps_per_epoch = math.ceil(total_sample / batch_size)
+    model = model.to(args.device)
+    criterion = criterion.to(args.device)
     model.eval()
     for batch_idx, (inputs, targets) in enumerate(data_loader):
         with torch.no_grad():

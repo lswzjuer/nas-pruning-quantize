@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-18 15:29:55
+# @Last Modified time: 2020-11-22 17:23:26
 
 
 import numpy as np 
@@ -91,7 +91,7 @@ def getArgs():
 def main():
     # args
     args=getArgs()
-    if args.arch != "resnet18":
+    if args.arch not in["resnet18","mobilenetv2","mobilenetv1"]:
         args.steplist = [150,220,260]
     else:
         args.steplist = [40,80,120]
@@ -147,22 +147,38 @@ def main():
         optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                     momentum=args.momentum,
                                     weight_decay=args.weight_decay)
+
     elif args.optimizer.lower() == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,
+                                    betas=(0.9, 0.999), 
+                                    weight_decay=args.weight_decay)
+
+    elif args.optimizer.lower() == 'radam':
+        optimizer = RAdam(model.parameters(), lr=args.lr,
                                     betas=(0.9, 0.999), 
                                     weight_decay=args.weight_decay)
     else:
         NotImplementedError()
 
-    if args.scheduler.lower() == "cos":
+
+    if args.optimizer.lower() == 'adam':
+        warm_up_epochs = 5
+        warm_up_with_adam = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs else 1
+        scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_adam)
+
+    if args.optimizer.lower() == 'radam':
+        warm_up_epochs = 0
+        warm_up_with_adam = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs else 1
+        scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_adam)
+
+    elif args.optimizer.lower() =="sgd" and args.scheduler.lower() == "cos":
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs,eta_min=0,last_epoch=-1)
 
-    elif args.scheduler.lower() == "step":
+    elif args.optimizer.lower() =="sgd" and args.scheduler.lower() == "step":
         scheduler=torch.optim.lr_scheduler.StepLR(optimizer=optimizer,step_size=args.step_size,gamma=0.1,last_epoch=-1)
     
-    elif args.scheduler.lower() == "mstep":
+    elif args.optimizer.lower() =="sgd" and args.scheduler.lower() == "mstep":
         scheduler=torch.optim.lr_scheduler.MultiStepLR(optimizer, args.steplist, gamma=args.gamma)
-    
     else:
         NotImplementedError()
 

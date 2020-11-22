@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-11-12 16:34:10
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-12 20:54:15
+# @Last Modified time: 2020-11-19 00:00:00
 
 
 import numpy as np 
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     # add subplot1
     sub1 = fig.add_subplot(1, 2, 1)
-    sub1.set_title("Forward ",y=1.1)
+    sub1.set_title("Forward")
     sub1.plot(flist,sign_list,color = 'black', linewidth = 2.0, linestyle = '-',
               label=r"$sign(.)$")
     sub1.plot(flist,htanh_list,color = 'red', linewidth = 2.0, linestyle = '-',
@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
 
     sub2 = fig.add_subplot(1, 2, 2)
-    sub2.set_title("Backward ",y=1.1)
+    sub2.set_title("Backward")
     sub2.plot(flist,sign_grad,color = 'black', linewidth = 2.0, linestyle = '-',
               label=r"$\frac{\mathrm{d}sign(x)}{\mathrm{d}x}$")
     sub2.plot(flist,htanh_grad,color = 'red', linewidth = 2.0, linestyle = '-',

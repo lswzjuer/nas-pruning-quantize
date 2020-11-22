@@ -158,3 +158,25 @@ class CosineWarmRestartsLr(LrScheduler):
             self.current_lr[i] = self.min_lr + 0.5 * curr_amp * (self.base_lr[i] - self.min_lr) \
                                  * (1 + math.cos(math.pi * epoch / curr_cycle))
         self.set_lr(self.current_lr)
+
+
+
+
+# config["max_num_epochs"] = 100
+# warm_up_epochs = 5
+# lr_milestones = [20,40]
+# # MultiStepLR without warm up
+# multistep_lr = lambda epoch: 0.1**len([m for m in lr_milestones if m <= epoch])
+# # warm_up_with_multistep_lr
+# warm_up_with_multistep_lr = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs else 0.1**len([m for m in lr_milestones if m <= epoch])
+# # warm_up_with_step_lr
+# gamma = 0.9; stepsize = 1
+# warm_up_with_step_lr = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs \
+#     else gamma**( ((epoch - warm_up_epochs) /(config["max_num_epochs"] - warm_up_epochs))//stepsize*stepsize)
+# # warm_up_with_cosine_lr
+# warm_up_with_cosine_lr = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs \
+#     else 0.5 * ( math.cos((epoch - warm_up_epochs) /(config["max_num_epochs"] - warm_up_epochs) * math.pi) + 1)
+
+
+# scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_cosine_lr)
+
