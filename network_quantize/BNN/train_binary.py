@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-22 17:23:26
+# @Last Modified time: 2020-11-24 21:12:54
 
 
 import numpy as np 
@@ -17,10 +17,12 @@ import random
 import math
 import logging
 import torch.backends.cudnn as cudnn
+import mobilenetv1_bnn as network0
 import mobilenetv2_bnn as networka
 import resnet18_bnn as networkb
 import resnet20_bnn as networkc
 import vggsmall_bnn as networkd
+import ghostnet_bnn as networke
 
 sys.path.append("../../")
 from  utils import *
@@ -28,10 +30,12 @@ from datasets.classification import getDataloader
 
 
 ARCH_DICT={
+    "mobilenetv1": network0,
     "mobilenetv2": networka,
     "resnet18" : networkb,
     "resnet20" : networkc,
-    "vggsmall" : networkd
+    "vggsmall" : networkd,
+    "ghostnet" : networke
 }
 
 
@@ -66,8 +70,8 @@ def getArgs():
     parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                         help='use pre-trained model')
     parser.add_argument('--num_best_scores',type=int,default=5,help="num_best_scores")
-    parser.add_argument('--optimizer',type=str,default="sgd",choices=["adam","sgd"],help="optimizer")
-    parser.add_argument('--scheduler',type=str,default="cos",choices=["cos","step","mstep"],help="scheduler")
+    parser.add_argument('--optimizer',type=str,default="sgd",choices=["adam","sgd","radam"],help="optimizer")
+    parser.add_argument('--scheduler',type=str,default="cos",choices=["warm_up_cos","cos","step","mstep"],help="scheduler")
     parser.add_argument('--step_size',type=int,default=100,help="steplr's step size")
     parser.add_argument('--gamma',type=float,default=0.1,help="learning rate decay")
     # recorder and logging
@@ -91,7 +95,7 @@ def getArgs():
 def main():
     # args
     args=getArgs()
-    if args.arch not in["resnet18","mobilenetv2","mobilenetv1"]:
+    if args.arch not in["resnet18","mobilenetv2","mobilenetv1","ghostnet"]:
         args.steplist = [150,220,260]
     else:
         args.steplist = [40,80,120]
@@ -161,23 +165,19 @@ def main():
         NotImplementedError()
 
 
-    if args.optimizer.lower() == 'adam':
+    if args.optimizer.lower() == 'warm_up_cos':
         warm_up_epochs = 5
-        warm_up_with_adam = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs else 1
+        warm_up_with_adam = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs else 
+                                 0.5 * (1 + math.cos(math.pi * epoch / args.epochs))
         scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_adam)
 
-    if args.optimizer.lower() == 'radam':
-        warm_up_epochs = 0
-        warm_up_with_adam = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs else 1
-        scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_adam)
-
-    elif args.optimizer.lower() =="sgd" and args.scheduler.lower() == "cos":
+    elif args.scheduler.lower() == "cos":
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs,eta_min=0,last_epoch=-1)
 
-    elif args.optimizer.lower() =="sgd" and args.scheduler.lower() == "step":
+    elif args.scheduler.lower() == "step":
         scheduler=torch.optim.lr_scheduler.StepLR(optimizer=optimizer,step_size=args.step_size,gamma=0.1,last_epoch=-1)
     
-    elif args.optimizer.lower() =="sgd" and args.scheduler.lower() == "mstep":
+    elif  args.scheduler.lower() == "mstep":
         scheduler=torch.optim.lr_scheduler.MultiStepLR(optimizer, args.steplist, gamma=args.gamma)
     else:
         NotImplementedError()
@@ -191,7 +191,7 @@ def main():
     if args.resume:
         if os.path.isfile(args.resume_path):
             model,extras,start_epoch=loadCheckpoint(args.resume_path,model,args)
-            optimizer,scheduler,perf_scoreboard=extras["optimizer"],extras['scheduler'],extras["perf_scoreboard"]
+            optimizer,perf_scoreboard=extras["optimizer"],extras["perf_scoreboard"]
         else:
             raise FileNotFoundError("No checkpoint found at '{}'".format(args.resume))
 
@@ -210,9 +210,11 @@ def main():
                 logger.info('Scoreboard best %d ==> Epoch [%d][Top1: %.3f   Top5: %.3f]',
                                 idx + 1, score['epoch'], score['top1'], score['top5'])
 
-        # start training 
+        # start training
+        for _ in range(start_epoch):
+            scheduler.step()
+
         for epoch in range(start_epoch, args.epochs):
-            
             logger.info('>>>> Epoch {} Lr {} '.format(epoch,
                                                             optimizer.param_groups[0]['lr'],
                                                             ))
@@ -241,7 +243,7 @@ def main():
             if epoch% args.save_freq==0:
                 saveCheckpoint(epoch, args.model, model,
                                 {
-                                'scheduler': scheduler,
+                                # 'scheduler': scheduler,
                                  'optimizer': optimizer,
                                  'perf_scoreboard' : perf_scoreboard
                                  }, 

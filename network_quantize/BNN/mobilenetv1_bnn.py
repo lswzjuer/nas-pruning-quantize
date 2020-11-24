@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:14:39
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-09 19:52:50
+# @Last Modified time: 2020-11-23 16:01:11
 '''MobileNet in PyTorch.
 
 See the paper "MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications"
@@ -42,11 +42,11 @@ class MobileNet(nn.Module):
     # NOTE: change (128,2) stride 2 -> 1 for CIFAR10 (128,1)
     # imagenet downsample 32
     # cifar10 downsample 8
-    cfg = [64, (128,2), 128, (256,2), 256, (512,2), 512, 512, 512, 512, 512, (1024,2), 1024]
+    cfg = [64, (128,1), 128, (256,2), 256, (512,2), 512, 512, 512, 512, 512, (1024,2), 1024]
     def __init__(self, num_classes=10):
         super(MobileNet, self).__init__()
         # NOTE: change conv1 stride 2 -> 1 for CIFAR10
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(32)
         self.layers = self._make_layers(in_planes=32)
         self.glopool= nn.AdaptiveAvgPool2d(output_size=(1,1))
@@ -61,13 +61,18 @@ class MobileNet(nn.Module):
                 m.weight.data.normal_(0, math.sqrt(2. / n))
                 if m.bias is not None:
                     m.bias.data.zero_()
+                # init.kaiming_normal_(m.weight, mode='fan_out')
+                # if m.bias is not None:
+                #     init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+
             elif isinstance(m, nn.Linear):
                 n = m.weight.size(1)
-                m.weight.data.normal_(0, 0.01)
-                m.bias.data.zero_()
+                m.weight.data.normal_(0, 0.001)
+                if m.bias is not None:
+                    init.constant_(m.bias, 0)
 
     def _make_layers(self, in_planes):
         layers = []
@@ -106,11 +111,11 @@ class MobileNet_1w1a(nn.Module):
     # NOTE: change (128,2) stride 2 -> 1 for CIFAR10 (128,1)
     # imagenet downsample 32
     # cifar10 downsample 8
-    cfg = [64, (128,2), 128, (256,2), 256, (512,2), 512, 512, 512, 512, 512, (1024,2), 1024]
+    cfg = [64, (128,1), 128, (256,2), 256, (512,2), 512, 512, 512, 512, 512, (1024,2), 1024]
     def __init__(self, num_classes=10):
         super(MobileNet_1w1a, self).__init__()
         # NOTE: change conv1 stride 2 -> 1 for CIFAR10
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(32)
         self.layers = self._make_layers(in_planes=32)
         self.glopool= nn.AdaptiveAvgPool2d(output_size=(1,1))
