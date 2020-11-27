@@ -4,7 +4,6 @@ import time
 import glob
 import numpy as np
 import torch
-import utils
 import logging
 import argparse
 import torch.nn as nn
@@ -12,97 +11,106 @@ import torch.utils
 import torch.nn.functional as F
 import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
-import copy
-import tools
+import copy 
 from binary_model_search import Network
 from binary_genotypes import PRIMITIVES
 from binary_genotypes import Genotype
 
+import yaml
+import tools
+import math
 sys.path.append("../../")
-from  utils import *
+from utils import *
 
 
-parser = argparse.ArgumentParser("pdarts binary cifar search ")
-parser.add_argument('--workers', type=int, default=2, help='number of workers to load dataset')
-parser.add_argument('--batch_size', type=int, default=96, help='batch size')
-
-parser.add_argument('--learning_rate', type=float, default=0.025, help='init learning rate')
-parser.add_argument('--learning_rate_min', type=float, default=0.0, help='min learning rate')
-parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
-parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
-parser.add_argument('--epochs', type=int, default=25, help='num of training epochs')
-
-parser.add_argument('--init_channels', type=int, default=16, help='num of init channels')
-parser.add_argument('--layers', type=int, default=5, help='total number of layers')
-parser.add_argument('--nodes', type=int, default=4, help='middle nodes')
-parser.add_argument('--group', type=int, default=12, help='group numbers')
-parser.add_argument('--stem_multiplier', type=int, default=3, help='stem_multiplier')
-
-parser.add_argument('--cutout', action='store_true', default=False, help='use cutout')
-parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
-parser.add_argument('--drop_path_prob', type=float, default=0.3, help='drop path probability')
-
-parser.add_argument('--seed', type=int, default=2, help='random seed')
-parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping')
-parser.add_argument('--train_portion', type=float, default=0.5, help='portion of training data')
-
-parser.add_argument('--arch_learning_rate', type=float, default=6e-4, help='learning rate for arch encoding')
-parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
-
-parser.add_argument('--save', type=str, default='BEXP', help='experiment path')
-parser.add_argument('--tmp_data_dir', type=str, default='/tmp/cache/', help='temp data dir')
-parser.add_argument('--note', type=str, default='try', help='note for this run')
-parser.add_argument('--resume',action='store_true',default=False,help="traing resume")
-parser.add_argument('--resume_path',type=str,default="./checkpoint/model_xx",help="traing resume_path")
-parser.add_argument('--print_freq', type=float, default=150, help='report frequency')
 
 
-parser.add_argument('--dropout_rate', action='append', default=[], help='dropout rate of skip connect')
-parser.add_argument('--add_width', action='append', default=['0'], help='add channels')
-parser.add_argument('--add_layers', action='append', default=['0'], help='add layers')
+def get_args():
 
-parser.add_argument('--cifar100', action='store_true', default=False, help='search with cifar100 dataset')
+    parser = argparse.ArgumentParser("pdarts binary cifar search ")
+    parser.add_argument('--workers', type=int, default=2, help='number of workers to load dataset')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size')
 
-args = parser.parse_args()
+    parser.add_argument('--learning_rate', type=float, default=0.025, help='init learning rate')
+    parser.add_argument('--learning_rate_min', type=float, default=0.0, help='min learning rate')
+    parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
+    parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
+    parser.add_argument('--epochs', type=int, default=25, help='num of training epochs')
+
+    parser.add_argument('--init_channels', type=int, default=36, help='num of init channels')
+    parser.add_argument('--layers', type=int, default=5, help='total number of layers')
+    parser.add_argument('--nodes', type=int, default=4, help='middle nodes')
+    parser.add_argument('--multiplier', type=int, default=4, help='middle nodes')
+
+    parser.add_argument('--gpus', type=int, default=1, help='gpus numbers')
+    parser.add_argument('--group', type=int, default=12, help='group numbers')
+    parser.add_argument('--stem_multiplier', type=int, default=3, help='stem_multiplier')
+
+    parser.add_argument('--cutout', action='store_true', default=False, help='use cutout')
+    parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
+    parser.add_argument('--drop_path_prob', type=float, default=0.3, help='drop path probability')
+
+    parser.add_argument('--seed', type=int, default=2, help='random seed')
+    parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping')
+    parser.add_argument('--train_portion', type=float, default=0.5, help='portion of training data')
+
+    parser.add_argument('--arch_learning_rate', type=float, default=6e-4, help='learning rate for arch encoding')
+    parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
+
+    parser.add_argument('--save', type=str, default='BEXP', help='experiment path')
+    parser.add_argument('--tmp_data_dir', type=str, default=r'F:\source_code\DataSets', help='temp data dir')
+    parser.add_argument('--note', type=str, default='try', help='note for this run')
+    parser.add_argument('--resume',action='store_true',default=False,help="traing resume")
+    parser.add_argument('--resume_path',type=str,default="./checkpoint/model_xx",help="traing resume_path")
+    parser.add_argument('--print_freq', type=float, default=150, help='report frequency')
 
 
-# get log 
-args.save = '{}/search-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
-tools.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
-log_format = '%(asctime)s %(message)s'
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-    format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logger = logging.getLogger('Train Search')
-logger.addHandler(fh)
+    parser.add_argument('--dropout_rate', action='append', default=[], help='dropout rate of skip connect')
+    parser.add_argument('--add_width', action='append', default=['0'], help='add channels')
+    parser.add_argument('--add_layers', action='append', default=['0'], help='add layers')
 
+    parser.add_argument('--cifar100', action='store_true', default=False, help='search with cifar100 dataset')
 
-# monitor
-pymonitor = ProgressMonitor(logger)
-tbmonitor = TensorBoardMonitor(logger, args.save)
-monitors = [pymonitor, tbmonitor]
+    args = parser.parse_args()
 
-if not torch.cuda.is_available():
-    logger.info('no gpu device available')
-    sys.exit(1)
-# set random seed
-np.random.seed(args.seed)
-torch.manual_seed(args.seed)
-args.use_cuda = args.gpus > 0 and torch.cuda.is_available()
-args.device = torch.device('cuda:0' if args.use_cuda else 'cpu')
-if args.use_cuda:
-    torch.cuda.manual_seed(args.seed)
-    cudnn.enabled = True
-    cudnn.benchmark = True
-setting = {k: v for k, v in args._get_kwargs()}
-logger.info(setting)
-with open(os.path.join(args.save,"args.yaml"), "w") as yaml_file:  # dump experiment config
-    yaml.dump(args, yaml_file)
-
+    return args
 
 
 def main():
+
+    # get log
+
+    args = get_args()
+    args.save = '{}/search-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+    # if not os.path.exists(args.save):
+    #     os.path.mkdir(args.save)
+    tools.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logger = logging.getLogger('Train Search')
+    logger.addHandler(fh)
+
+    # monitor
+    pymonitor = ProgressMonitor(logger)
+    tbmonitor = TensorBoardMonitor(logger, args.save)
+    monitors = [pymonitor, tbmonitor]
+
+    # set random seed
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    args.use_cuda = args.gpus > 0 and torch.cuda.is_available()
+    args.device = torch.device('cuda:0' if args.use_cuda else 'cpu')
+    if args.use_cuda:
+        torch.cuda.manual_seed(args.seed)
+        cudnn.enabled = True
+        cudnn.benchmark = True
+    setting = {k: v for k, v in args._get_kwargs()}
+    logger.info(setting)
+    with open(os.path.join(args.save,"args.yaml"), "w") as yaml_file:  # dump experiment config
+        yaml.dump(args, yaml_file)
 
     if args.cifar100:
         CIFAR_CLASSES = 100
@@ -113,9 +121,9 @@ def main():
 
     #  prepare dataset
     if args.cifar100:
-        train_transform, valid_transform = utils._data_transforms_cifar100(args)
+        train_transform, valid_transform = tools._data_transforms_cifar100(args)
     else:
-        train_transform, valid_transform = utils._data_transforms_cifar10(args)
+        train_transform, valid_transform = tools._data_transforms_cifar10(args)
 
     if args.cifar100:
         train_data = dset.CIFAR100(root=args.tmp_data_dir, train=True, download=True, transform=train_transform)
@@ -164,16 +172,16 @@ def main():
     if len(args.dropout_rate) ==3:
         drop_rate = args.dropout_rate
     else:
-        drop_rate = [0.0, 0.0, 0.0]
-    eps_no_archs = [10, 10, 10]
+        drop_rate = [0.1, 0.4, 0.7]
 
+    eps_no_archs = [0, 0, 0]
     state_epochs=0
     for sp in range(len(num_to_keep)):
         model = Network(args.init_channels + int(add_width[sp]), CIFAR_CLASSES, args.layers + int(add_layers[sp]), criterion,
-                    steps=args.nodes, multiplier=args.nodes, stem_multiplier=args.stem_multiplier, 
+                    steps=args.nodes, multiplier=args.multiplier, stem_multiplier=args.stem_multiplier, 
                     switches_normal=switches_normal, switches_reduce=switches_reduce, group=args.group,p=float(drop_rate[sp]))
         model = model.to(args.device)
-        logger.info("param size = %fMB", utils.count_parameters_in_MB(model))
+        logger.info("stage:{} param size:{}MB".format(sp,tools.count_parameters_in_MB(model)))
 
         optimizer = torch.optim.SGD(
                 model.weight_parameters(),
@@ -192,7 +200,6 @@ def main():
         eps_no_arch = eps_no_archs[sp]
         scale_factor = 0.2
         for epoch in range(epochs):
-            scheduler.step()
             lr = scheduler.get_lr()[0]
             logger.info('Epoch: %d lr: %e', epoch, lr)
             epoch_start = time.time()
@@ -200,13 +207,15 @@ def main():
             if epoch < eps_no_arch:
                 model.p = float(drop_rate[sp]) * (epochs - epoch - 1) / epochs
                 model.update_p()
-                t_top1, t_top5, t_loss = train(state_epochs+epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer_a, train_arch=False)
+                t_top1, t_top5, t_loss = train(state_epochs+epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer_a,
+                            args,monitors,logger, train_arch=False)
             else:
                 model.p = float(drop_rate[sp]) * np.exp(-(epoch - eps_no_arch) * scale_factor) 
                 model.update_p()                
-                t_top1, t_top5, t_loss = train(state_epochs+epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer_a, train_arch=True)
+                t_top1, t_top5, t_loss = train(state_epochs+epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer_a, 
+                    args,monitors,logger,train_arch=True)
             
-            v_top1, v_top5, v_loss = infer(state_epochs+epoch,valLoader, model, criterion)
+            v_top1, v_top5, v_loss = infer(state_epochs+epoch,valLoader, model, criterion,args,monitors,logger,)
             
             if epoch >= eps_no_arch:
                 # 将本epoch的解析结果保存
@@ -214,9 +223,10 @@ def main():
                 normal_prob = F.softmax(arch_param[0], dim=-1).data.cpu().numpy()
                 reduce_prob = F.softmax(arch_param[1], dim=-1).data.cpu().numpy()
                 logger.info('Genotypev: {}'.format(parse_genotype(switches_normal.copy(),switches_reduce.copy(),
-                                                          normal_prob.clone(),reduce_prob.clone())))
+                                                          normal_prob.copy(),reduce_prob.copy())))
+            scheduler.step()
 
-        utils.save(model, os.path.join(args.save, 'state{}_weights.pt'.format(sp)))
+        tools.save(model, os.path.join(args.save, 'state{}_weights.pt'.format(sp)))
         state_epochs += args.epochs
         # Save switches info for s-c refinement. 
         if sp == len(num_to_keep) - 1:
@@ -230,19 +240,19 @@ def main():
         logger.info("normal: \n{}".format(normal_prob))
         logger.info("reduce: \n{}".format(reduce_prob))
         logger.info('Genotypev: {}'.format(parse_genotype(switches_normal.copy(),switches_reduce.copy(),
-                                                          normal_prob.clone(),reduce_prob.clone())))
+                                                          normal_prob.copy(),reduce_prob.copy())))
 
         # 根据最新的结构权重,旧的搜索空间,需要抛弃的数量,当前状态 来进行空间正则化
-        switches_normal = update_switches(normal_prob.clone(),switches_normal,
+        switches_normal = update_switches(normal_prob.copy(),switches_normal,
                                             num_to_drop[sp],sp,len(num_to_keep))
-        switches_reduce = update_switches(reduce_prob.clone(),switches_reduce,
+        switches_reduce = update_switches(reduce_prob.copy(),switches_reduce,
                                             num_to_drop[sp],sp,len(num_to_keep))
 
         logger.info('------Dropping %d paths------' % num_to_drop[sp])
         logger.info('switches_normal = %s', switches_normal)
-        logging_switches(switches_normal)
+        logging_switches(switches_normal,logger)
         logger.info('switches_reduce = %s', switches_reduce)
-        logging_switches(switches_reduce)
+        logging_switches(switches_reduce,logger)
 
 
         if sp == len(num_to_keep) - 1:
@@ -302,21 +312,19 @@ def main():
                 logger.info(genotype)              
 
 
-
-
-
-def train(epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer_a,train_arch=True):
-    objs = utils.AvgrageMeter()
-    top1 = utils.AvgrageMeter()
-    top5 = utils.AvgrageMeter()
+def train(epoch, train_queue, valid_queue, model, criterion, optimizer, optimizer_a,
+    args,monitors,logger,train_arch=True):
+    objs = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
 
     total_sample = len(train_queue.sampler)
     batch_size = train_queue.batch_size
     steps_per_epoch = math.ceil(total_sample / batch_size)
     logger.info('Training: %d samples (%d per mini-batch)', total_sample, batch_size)
 
+    model.train()
     for step, (input, target) in enumerate(train_queue):
-        model.train()
         n = input.size(0)
         input = input.to(args.device)
         target = target.to(args.device)
@@ -344,7 +352,7 @@ def train(epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer
         nn.utils.clip_grad_norm_(model.weight_parameters(), args.grad_clip)
         optimizer.step()
 
-        prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
+        prec1, prec5 = accuracy(logits, target, topk=(1, 5))
         objs.update(loss.data.item(), n)
         top1.update(prec1.data.item(), n)
         top5.update(prec5.data.item(), n)
@@ -364,14 +372,14 @@ def train(epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer
     return top1.avg, top5.avg, objs.avg
 
 
-def infer(epoch,valid_queue, model, criterion):
-    objs = utils.AvgrageMeter()
-    top1 = utils.AvgrageMeter()
-    top5 = utils.AvgrageMeter()
+def infer(epoch,valid_queue, model, criterion,args,monitors,logger):
+    objs = AverageMeter()
+    top1 = AverageMeter()
+    top5 = AverageMeter()
     model.eval()
 
-    total_sample = len(train_queue.sampler)
-    batch_size = train_queue.batch_size
+    total_sample = len(valid_queue.sampler)
+    batch_size = valid_queue.batch_size
     steps_per_epoch = math.ceil(total_sample / batch_size)
     logger.info('Validation: %d samples (%d per mini-batch)', total_sample, batch_size)
 
@@ -382,7 +390,7 @@ def infer(epoch,valid_queue, model, criterion):
             logits = model(input)
             loss = criterion(logits, target)
 
-        prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
+        prec1, prec5 = accuracy(logits, target, topk=(1, 5))
         n = input.size(0)
         objs.update(loss.data.item(), n)
         top1.update(prec1.data.item(), n)
@@ -404,15 +412,15 @@ def infer(epoch,valid_queue, model, criterion):
 
 
 
-def update_switches(switches_weights,old_switches,drop_num,state,total_state=3)
+def update_switches(switches_weights,old_switches,drop_num,state,total_state=3):
     new_switches = old_switches.copy()
-    assert len(switches_weights) == len(old_switches) and stage< total_state
+    assert len(switches_weights) == len(old_switches) and state< total_state
     for i in range(len(old_switches)):
         idxs = []
         for j in range(len(PRIMITIVES)):
             if old_switches[i][j]:
                 idxs.append(j)
-        assert len(idxs) = len(list(switches_weights[i]))
+        assert len(idxs) == len(list(switches_weights[i]))
         if state == total_state - 1:
             drop = get_min_k_no_zero(switches_weights[i, :], idxs, drop_num)
         else:
@@ -522,7 +530,7 @@ def get_min_k_no_zero(w_in, idxs, k):
     return index
 
 
-def logging_switches(switches):
+def logging_switches(switches,logger):
     for i in range(len(switches)):
         ops = []
         for j in range(len(switches[i])):

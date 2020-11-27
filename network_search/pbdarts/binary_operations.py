@@ -45,88 +45,89 @@ class BinaryConv(nn.Module):
 
 
 
-class BinaryDilGroupConv(nn.Module):
-  def __init__(self, C_in, C_out, kernel_size, stride, padding,dilation,group,affine=True,options="D"):
-    super(BinaryDilGroupConv, self).__init__()
+# class BinaryDilGroupConv(nn.Module):
+#   def __init__(self, C_in, C_out, kernel_size, stride, padding,dilation,group,affine=True,options="D"):
+#     super(BinaryDilGroupConv, self).__init__()
 
-    self.bn_1 = nn.BatchNorm2d(C_in, affine=affine)
-    self.conv_1 = Layer.Conv2d_1w1a(C_in, C_in, kernel_size=kernel_size, 
-                                    stride=stride, padding=padding,dilation=dilation,
-                                     groups=group, bias=False)
+#     self.group = int(C_in/4)
+#     self.bn_1 = nn.BatchNorm2d(C_in, affine=affine)
+#     self.conv_1 = Layer.Conv2d_1w1a(C_in, C_in, kernel_size=kernel_size, 
+#                                     stride=stride, padding=padding,dilation=dilation,
+#                                      groups=self.group, bias=False)
 
-    self.bn_2 = nn.BatchNorm2d(C_in, affine=affine)
-    self.conv_2 = Layer.Conv2d_1w1a(C_in, C_out, kernel_size=1, padding=0, bias=False)
+#     self.bn_2 = nn.BatchNorm2d(C_in, affine=affine)
+#     self.conv_2 = Layer.Conv2d_1w1a(C_in, C_out, kernel_size=1, padding=0, bias=False)
 
-    self.shortcut = nn.Sequential()
-    if stride != 1:
-        if options == "A":
-            self.shortcut = LambdaLayer(lambda x:
-                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, C_in//4, C_in//4), "constant", 0))
-        elif options == "B":
-            self.shortcut = nn.Sequential(
-                 Layer.Conv2d_1w1a(C_in, C_in, kernel_size=1, stride=stride, bias=False),
-                 nn.BatchNorm2d(C_in,affine=affine)
-            )
-        elif options == "C":
-            self.shortcut = nn.Sequential( 
-                nn.MaxPool2d(kernel_size=kernel_size, stride=stride, padding=padding),
-            )
-        else:
-            self.shortcut = nn.Sequential( 
-                nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding),
-            )
-
-
-  def forward(self, x):
-    out = self.conv_1(self.bn_1(x))
-    out += self.shortcut(x)
-    #out = F.hardtanh(out)
-    x1 = out
-    out = self.conv_2(self.bn_2(out))
-    out += x1
-    #out = F.hardtanh(out)
-    return out
+#     self.shortcut = nn.Sequential()
+#     if stride != 1:
+#         if options == "A":
+#             self.shortcut = LambdaLayer(lambda x:
+#                             F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, C_in//4, C_in//4), "constant", 0))
+#         elif options == "B":
+#             self.shortcut = nn.Sequential(
+#                  Layer.Conv2d_1w1a(C_in, C_in, kernel_size=1, stride=stride, bias=False),
+#                  nn.BatchNorm2d(C_in,affine=affine)
+#             )
+#         elif options == "C":
+#             self.shortcut = nn.Sequential( 
+#                 nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+#             )
+#         else:
+#             self.shortcut = nn.Sequential( 
+#                 nn.AvgPool2d(kernel_size=3, stride=2, padding=1),
+#             )
 
 
-class BinaryGroupConv(nn.Module):
-  def __init__(self, C_in, C_out, kernel_size, stride, padding, group,affine=True,options="D"):
-    super(BinaryGroupConv, self).__init__()
-
-    self.bn_1 = nn.BatchNorm2d(C_in, affine=affine)
-    self.conv_1 = Layer.Conv2d_1w1a(C_in, C_in, kernel_size=kernel_size, 
-                                    stride=stride, padding=padding, groups=group, bias=False)
-
-    self.bn_2 = nn.BatchNorm2d(C_in, affine=affine)
-    self.conv_2 = Layer.Conv2d_1w1a(C_in, C_out, kernel_size=1, padding=0, bias=False)
-    self.shortcut = nn.Sequential()
-    if stride != 1:
-        if options == "A":
-            self.shortcut = LambdaLayer(lambda x:
-                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, cin//4, cin//4), "constant", 0))
-        elif options == "B":
-            self.shortcut = nn.Sequential(
-                 Layer.Conv2d_1w1a(C_in, C_in, kernel_size=1, stride=stride, bias=False),
-                 nn.BatchNorm2d(C_in,affine=affine)
-            )
-        elif options == "C":
-            self.shortcut = nn.Sequential( 
-                nn.MaxPool2d(kernel_size=kernel_size, stride=stride, padding=padding),
-            )
-        else:
-            self.shortcut = nn.Sequential( 
-                nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding),
-            )
+#   def forward(self, x):
+#     out = self.conv_1(self.bn_1(x))
+#     out += self.shortcut(x)
+#     #out = F.hardtanh(out)
+#     x1 = out
+#     out = self.conv_2(self.bn_2(out))
+#     out += x1
+#     #out = F.hardtanh(out)
+#     return out
 
 
-  def forward(self, x):
-    out = self.conv_1(self.bn_1(x))
-    out += self.shortcut(x)
-    #out = F.hardtanh(out)
-    x1 = out
-    out = self.conv_2(self.bn_2(out))
-    out += x1
-    #out = F.hardtanh(out)
-    return out
+# class BinaryGroupConv(nn.Module):
+#   def __init__(self, C_in, C_out, kernel_size, stride, padding, group,affine=True,options="D"):
+#     super(BinaryGroupConv, self).__init__()
+#     self.group = int(C_in/4)
+#     self.bn_1 = nn.BatchNorm2d(C_in, affine=affine)
+#     self.conv_1 = Layer.Conv2d_1w1a(C_in, C_in, kernel_size=kernel_size, 
+#                                     stride=stride, padding=padding, groups=self.group, bias=False)
+
+#     self.bn_2 = nn.BatchNorm2d(C_in, affine=affine)
+#     self.conv_2 = Layer.Conv2d_1w1a(C_in, C_out, kernel_size=1, padding=0, bias=False)
+#     self.shortcut = nn.Sequential()
+#     if stride != 1:
+#         if options == "A":
+#             self.shortcut = LambdaLayer(lambda x:
+#                             F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, cin//4, cin//4), "constant", 0))
+#         elif options == "B":
+#             self.shortcut = nn.Sequential(
+#                  Layer.Conv2d_1w1a(C_in, C_in, kernel_size=1, stride=stride, bias=False),
+#                  nn.BatchNorm2d(C_in,affine=affine)
+#             )
+#         elif options == "C":
+#             self.shortcut = nn.Sequential( 
+#                 nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+#             )
+#         else:
+#             self.shortcut = nn.Sequential( 
+#                 nn.AvgPool2d(kernel_size=3, stride=2, padding=1),
+#             )
+
+
+#   def forward(self, x):
+#     out = self.conv_1(self.bn_1(x))
+#     out += self.shortcut(x)
+#     #out = F.hardtanh(out)
+#     x1 = out
+#     out = self.conv_2(self.bn_2(out))
+#     out += x1
+#     #out = F.hardtanh(out)
+#     return out
 
 
 class Identity(nn.Module):
@@ -165,3 +166,90 @@ class FactorizedReduce(nn.Module):
     return out
 
 
+
+
+
+class ShuffleBlock(nn.Module):
+    def __init__(self, groups):
+        super(ShuffleBlock, self).__init__()
+        self.groups = groups
+
+    def forward(self, x):
+        '''Channel shuffle: [N,C,H,W] -> [N,g,C/g,H,W] -> [N,C/g,g,H,w] -> [N,C,H,W]'''
+        N,C,H,W = x.size()
+        g = self.groups
+        return x.view(N,g,C//g,H,W).permute(0,2,1,3,4).reshape(N,C,H,W)
+
+
+class BinaryDilGroupConv(nn.Module):
+  def __init__(self, C_in, C_out, kernel_size, stride, padding,dilation,group,affine=True,options="D"):
+    super(BinaryDilGroupConv, self).__init__()
+    assert C_in ==  C_out
+    self.group = int(C_in/4)
+    self.bn_1 = nn.BatchNorm2d(C_in, affine=affine)
+    self.conv_1 = Layer.Conv2d_1w1a(C_in, C_out, kernel_size=kernel_size, 
+                                    stride=stride, padding=padding,dilation=dilation,
+                                     groups=self.group, bias=False)
+    self.shuffle = ShuffleBlock(self.group)
+
+    self.shortcut = nn.Sequential()
+    if stride != 1:
+        if options == "A":
+            self.shortcut = LambdaLayer(lambda x:
+                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, C_in//4, C_in//4), "constant", 0))
+        elif options == "B":
+            self.shortcut = nn.Sequential(
+                 Layer.Conv2d_1w1a(C_in, C_in, kernel_size=1, stride=stride, bias=False),
+                 nn.BatchNorm2d(C_in,affine=affine)
+            )
+        elif options == "C":
+            self.shortcut = nn.Sequential( 
+                nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            )
+        else:
+            self.shortcut = nn.Sequential( 
+                nn.AvgPool2d(kernel_size=3, stride=2, padding=1),
+            )
+
+
+  def forward(self, x):
+    out = self.shuffle(self.conv_1(self.bn_1(x)))
+    out += self.shortcut(x)
+    #out = F.hardtanh(out)
+    return out
+
+
+class BinaryGroupConv(nn.Module):
+  def __init__(self, C_in, C_out, kernel_size, stride, padding, group,affine=True,options="D"):
+    super(BinaryGroupConv, self).__init__()
+    self.group = int(C_in/4)
+    self.bn_1 = nn.BatchNorm2d(C_in, affine=affine)
+    self.conv_1 = Layer.Conv2d_1w1a(C_in, C_in, kernel_size=kernel_size, 
+                                    stride=stride, padding=padding, groups=self.group, bias=False)
+    self.shuffle = ShuffleBlock(self.group)
+
+    self.shortcut = nn.Sequential()
+    if stride != 1:
+        if options == "A":
+            self.shortcut = LambdaLayer(lambda x:
+                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, cin//4, cin//4), "constant", 0))
+        elif options == "B":
+            self.shortcut = nn.Sequential(
+                 Layer.Conv2d_1w1a(C_in, C_in, kernel_size=1, stride=stride, bias=False),
+                 nn.BatchNorm2d(C_in,affine=affine)
+            )
+        elif options == "C":
+            self.shortcut = nn.Sequential( 
+                nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            )
+        else:
+            self.shortcut = nn.Sequential( 
+                nn.AvgPool2d(kernel_size=3, stride=2, padding=1),
+            )
+
+
+  def forward(self, x):
+    out = self.shuffle(self.conv_1(self.bn_1(x)))
+    out += self.shortcut(x)
+    #out = F.hardtanh(out)
+    return out

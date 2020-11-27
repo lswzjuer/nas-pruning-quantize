@@ -175,38 +175,6 @@ class Network(nn.Module):
         return network_params
 
 
-    def genotype(self):
-
-        def _parse(weights):
-            gene = []
-            n = 2
-            start = 0
-            for i in range(self._steps):
-                end = start + n
-                W = weights[start:end].copy()
-                edges = sorted(range(i + 2), key=lambda x: -max(W[x][k] for k in range(len(W[x])) if k != PRIMITIVES.index('none')))[:2]
-                for j in edges:
-                    k_best = None
-                    for k in range(len(W[j])):
-                        if k != PRIMITIVES.index('none'):
-                            if k_best is None or W[j][k] > W[j][k_best]:
-                                k_best = k
-                    gene.append((PRIMITIVES[k_best], j))
-                start = end
-                n += 1
-            return gene
-
-        gene_normal = _parse(F.softmax(self.alphas_normal, dim=-1).data.cpu().numpy())
-        gene_reduce = _parse(F.softmax(self.alphas_reduce, dim=-1).data.cpu().numpy())
-
-        concat = range(2+self._steps-self._multiplier, self._steps+2)
-        genotype = Genotype(
-          normal=gene_normal, normal_concat=concat,
-          reduce=gene_reduce, reduce_concat=concat
-        )
-        return genotype
-
-
 
 
 if __name__ == '__main__':
@@ -219,8 +187,7 @@ if __name__ == '__main__':
     net = Network(8,10,4,None,2,2,3,switches_normal=switches_normal, switches_reduce=switches_reduce, group=1, p=0.1)
     # print(net)
     print(net.arch_parameters())
-    # print(net.genotypev1())
-    print(net.genotype())
+    # print(net.genotypev1()
     # print(net.genotypev3())
     for name,papram in net.named_parameters():
         print(name)
