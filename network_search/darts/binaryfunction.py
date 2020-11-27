@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 17:07:12
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-18 00:29:40
+# @Last Modified time: 2020-11-27 14:03:15
 
 
 '''
@@ -59,9 +59,28 @@ class BinaryFuncv2(Function):
     @staticmethod
     def backward(ctx, grad_output):
         input, = ctx.saved_tensors
-        grad_input = 2 * (1 - torch.pow(torch.tanh(input * 2), 2)) * grad_output
+        grad_input = 3 * (1 - torch.pow(torch.tanh(input * 3), 2)) * grad_output
         return grad_input
 
+
+
+class BinaryFuncv3(Function):
+    @staticmethod
+    def forward(ctx, input):
+        ctx.save_for_backward(input)
+        out = safeSign(input)
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        input, = ctx.saved_tensors
+        mask1 = input < -1
+        mask2 = input < 0
+        mask3 = input < 1
+        mask = 0 * mask1.type(torch.float32) + (input*2 + 2) * (1-mask1.type(torch.float32))
+        mask = mask * mask2.type(torch.float32) + (-input*2 + 2) * (1-mask2.type(torch.float32))
+        mask = mask * mask3.type(torch.float32) + 0 * (1- mask3.type(torch.float32))
+        return grad_output * mask
 
 
 # torhc.round(torch.clamp(x,0,1))
