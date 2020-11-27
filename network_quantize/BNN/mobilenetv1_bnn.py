@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:14:39
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-23 16:01:11
+# @Last Modified time: 2020-11-24 21:34:06
 '''MobileNet in PyTorch.
 
 See the paper "MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications"
@@ -16,10 +16,6 @@ import bnn_layers as Layer
 
 
 __all__ = ['MobileNetV1','MobileNetV1_1w1a']
-
-
-
-
 
 
 class Block(nn.Module):

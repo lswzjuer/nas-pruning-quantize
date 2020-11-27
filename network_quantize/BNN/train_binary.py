@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-24 21:12:54
+# @Last Modified time: 2020-11-24 21:33:56
 
 
 import numpy as np 
@@ -165,10 +165,10 @@ def main():
         NotImplementedError()
 
 
-    if args.optimizer.lower() == 'warm_up_cos':
+    if args.scheduler.lower() == 'warm_up_cos':
         warm_up_epochs = 5
-        warm_up_with_adam = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs else 
-                                 0.5 * (1 + math.cos(math.pi * epoch / args.epochs))
+        warm_up_with_adam = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs \
+         else 0.5 * (1 + math.cos(math.pi * epoch / args.epochs))
         scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_adam)
 
     elif args.scheduler.lower() == "cos":
