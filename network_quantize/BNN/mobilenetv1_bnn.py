@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:14:39
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-24 21:34:06
+# @Last Modified time: 2020-10-09 19:52:50
 '''MobileNet in PyTorch.
 
 See the paper "MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications"
@@ -16,6 +16,10 @@ import bnn_layers as Layer
 
 
 __all__ = ['MobileNetV1','MobileNetV1_1w1a']
+
+
+
+
 
 
 class Block(nn.Module):
@@ -57,18 +61,13 @@ class MobileNet(nn.Module):
                 m.weight.data.normal_(0, math.sqrt(2. / n))
                 if m.bias is not None:
                     m.bias.data.zero_()
-                # init.kaiming_normal_(m.weight, mode='fan_out')
-                # if m.bias is not None:
-                #     init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-
             elif isinstance(m, nn.Linear):
                 n = m.weight.size(1)
-                m.weight.data.normal_(0, 0.001)
-                if m.bias is not None:
-                    init.constant_(m.bias, 0)
+                m.weight.data.normal_(0, 0.01)
+                m.bias.data.zero_()
 
     def _make_layers(self, in_planes):
         layers = []
@@ -150,7 +149,7 @@ class MobileNet_1w1a(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = F.relu6(self.bn1(self.conv1(x)))
+        out = self.bn1(self.conv1(x))
         out = self.layers(out)
         out = self.glopool(out)
         out = out.view(out.size(0), -1)

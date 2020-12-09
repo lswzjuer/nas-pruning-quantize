@@ -24,7 +24,8 @@ import math
 
 
 
-__all__ = ['ResNet18_1w1a', 'ResNet18', 'ResNet34',"ResNet50"]
+__all__ = ['ResNet18_1w1a', 'ResNet18', 'ResNet34',"ResNet50","ResNet50_1w1a"]
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -164,6 +165,36 @@ class BasicBlock_1w1a(nn.Module):
         return out
 
 
+
+
+class Bottleneck_1w1a(nn.Module):
+    expansion = 4
+    def __init__(self, in_planes, planes, stride=1):
+        super(Bottleneck_1w1a, self).__init__()
+        self.conv1 = Layer.BNNConv2d_1w1a(in_planes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = Layer.BNNConv2d_1w1a(planes, planes, kernel_size=3,
+                               stride=stride, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv3 = Layer.BNNConv2d_1w1a(planes, self.expansion *planes, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(self.expansion*planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion*planes:
+            self.shortcut = nn.Sequential(
+                Layer.BNNConv2d_1w1a(in_planes, self.expansion*planes,
+                    kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(self.expansion*planes)
+            )
+
+    def forward(self, x):
+        out = self.bn1(self.conv1(x))
+        out = self.bn2(self.conv2(out))
+        out = self.bn3(self.conv3(out))
+        out += self.shortcut(x)
+        return out
+
+
 class ResNet_1w1a(nn.Module):
     # imagenet downsample 32
     # cifar10 downsample 8
@@ -241,6 +272,10 @@ def ResNet34(pretrained=False, progress=True, **kwargs):
 
 def ResNet50(pretrained=False, progress=True, **kwargs):
     return ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+
+
+def ResNet50_1w1a(pretrained=False, progress=True, **kwargs):
+    return ResNet_1w1a(Bottleneck_1w1a, [3, 4, 6, 3], **kwargs)
 
 
 def ResNet101(pretrained=False, progress=True, **kwargs):

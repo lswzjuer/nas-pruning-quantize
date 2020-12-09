@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-28 22:59:55
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-23 16:01:33
+# @Last Modified time: 2020-11-21 22:09:53
 
 
 import torch.nn as nn
@@ -23,6 +23,12 @@ def conv_bn(inp, oup, stride):
         nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
         nn.BatchNorm2d(oup),
         nn.ReLU6(inplace=True)
+    )
+
+def conv_bn_1w1a(inp, oup, stride):
+    return nn.Sequential(
+        nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+        nn.BatchNorm2d(oup)
     )
 
 
@@ -208,7 +214,7 @@ class MobileNet_1w1a(nn.Module):
         interverted_residual_setting = [
             # t, c, n, s
             [1, 16, 1, 1],
-            [6, 24, 2, 2],  # NOTE: change stride 2 -> 1 for CIFAR10
+            [6, 24, 2, 1],  # NOTE: change stride 2 -> 1 for CIFAR10
             [6, 32, 3, 2],
             [6, 64, 4, 2],
             [6, 96, 3, 1],
@@ -221,7 +227,7 @@ class MobileNet_1w1a(nn.Module):
         # input_channel = make_divisible(input_channel * width_mult)  # first channel is always 32!
         self.last_channel = make_divisible(last_channel * width_mult) if width_mult > 1.0 else last_channel
         # NOTE: change conv1 stride 2 -> 1 for CIFAR10
-        self.features = [conv_bn(3, input_channel, 2)]
+        self.features = [conv_bn_1w1a(3, input_channel, 1)]
         # building inverted residual blocks
         for t, c, n, s in interverted_residual_setting:
             output_channel = make_divisible(c * width_mult) if t > 1 else c

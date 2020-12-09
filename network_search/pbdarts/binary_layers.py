@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-25 21:49:54
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-19 17:14:54
+# @Last Modified time: 2020-11-28 20:12:55
 
 import torch
 import torch.nn as nn
@@ -30,13 +30,13 @@ class Conv2d_1w1a(nn.Conv2d):
         # second
 
         w = self.weight
-        bw = w - w.view(w.size(0), -1).mean(-1).view(w.size(0), 1, 1, 1)
-        bw = bw / bw.view(bw.size(0), -1).std(-1).view(bw.size(0), 1, 1, 1)
-        sw = torch.pow(torch.tensor([2]*bw.size(0)).to(input.device).float(), (torch.log(bw.abs().view(bw.size(0), -1).mean(-1)) / math.log(2)).round().float()).view(bw.size(0), 1, 1, 1).detach()
-        bw = binaryfunction.BinaryFuncv2().apply(bw)
-        bw = bw * sw
+        # bw = w - w.view(w.size(0), -1).mean(-1).view(w.size(0), 1, 1, 1)
+        # bw = bw / bw.view(bw.size(0), -1).std(-1).view(bw.size(0), 1, 1, 1)
+        # sw = torch.pow(torch.tensor([2]*bw.size(0)).to(input.device).float(), (torch.log(bw.abs().view(bw.size(0), -1).mean(-1)) / math.log(2)).round().float()).view(bw.size(0), 1, 1, 1).detach()
+        # bw = binaryfunction.BinaryFuncv2().apply(bw)
+        # bw = bw * sw
         binput = binaryfunction.BinaryFuncv2().apply(input)
-        output = F.conv2d(binput, bw, self.bias,
+        output = F.conv2d(binput, w, self.bias,
                           self.stride, self.padding,
                           self.dilation, self.groups)
         return output

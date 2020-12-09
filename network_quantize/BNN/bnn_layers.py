@@ -21,8 +21,9 @@ class BNNConv2d_1w1a(nn.Conv2d):
                                         dilation=dilation,groups=groups,bias=bias)
 
     def forward(self, input):
-        binput = binaryfunction.BinaryFunc().apply(input)
-        bweight = binaryfunction.BinaryFunc().apply(self.weight)
+        binput = binaryfunction.BinaryFuncv3().apply(input)
+        #bweight = binaryfunction.BinaryFuncv2().apply(self.weight)
+        bweight = self.weight
         output = F.conv2d(binput, bweight, self.bias,
                           self.stride, self.padding,
                           self.dilation, self.groups)

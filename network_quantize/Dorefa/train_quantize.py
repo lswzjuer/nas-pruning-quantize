@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-18 15:30:06
+# @Last Modified time: 2020-10-11 16:53:46
 
 
 import numpy as np 
@@ -39,7 +39,7 @@ def getArgs():
     parser=argparse.ArgumentParser("Train network in cifar10/100/svhn/mnist/tiny_imagenet")
     # model and train setting
     parser.add_argument('--arch',default="resnet20",help="binary resnet models")
-    parser.add_argument('--model',default="resnet20_1w1a",help="binary resnet models")
+    parser.add_argument('--model',default="resnet20",help="binary resnet models")
     parser.add_argument('--init_type',default="kaiming",help="weight init func")
     # datasets
     parser.add_argument('--datasets',type=str,default="cifar10",help="datset name")
@@ -95,10 +95,11 @@ def getArgs():
 def main():
     # args
     args=getArgs()
-    if args.arch != "resnet18":
-        args.steplist = [150,220,260]
+    if args.arch in["resnet18","mobilenetv2","mobilenetv1","ghostnet"]:
+        args.steplist = [30,60,90]
+        # args.steplist = [40,80,120]
     else:
-        args.steplist = [40,80,120]
+        args.steplist = [150,220,260]
     # logging
     projectName="{}_{}_{}_{}_{}_{}and{}_{}".format(args.model.lower(),args.datasets,
                                     args.epochs,args.batch_size,

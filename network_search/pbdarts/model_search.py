@@ -168,7 +168,7 @@ class Network(nn.Module):
     def weight_parameters(self):
         network_params = []
         for k, v in self.named_parameters():
-            if not (k.endswith('alphas_normal') or k.endswith('alphas_reduce')):
+            if "alphas_normal" not in k and 'alphas_reduce' not in k:
                 network_params.append(v)
         return network_params
 
@@ -176,15 +176,15 @@ class Network(nn.Module):
 
 
 if __name__ == '__main__':
-  net = Network(8,10,4,None,2,2,3,1,0.0)
+  net = Network(8,10,4,None,2,2,3,[],[],0.0)
   # print(net)
-  print(net.arch_parameters())
+  net.weight_parameters()
   # print(net.genotypev1())
   print(net.genotype())
   # print(net.genotypev3())
-  for name,papram in net.named_parameters():
-    print(name)
-  print(net.p)
-  net.p = 0.1
-  net.update_p()
-  print(net.p)
+  # for name,papram in net.named_parameters():
+  #   print(name)
+  # print(net.p)
+  # net.p = 0.1
+  # net.update_p()
+  # print(net.p)

@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-19 20:57:00
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-24 21:33:56
+# @Last Modified time: 2020-11-24 21:12:54
 
 
 import numpy as np 
@@ -23,6 +23,10 @@ import resnet18_bnn as networkb
 import resnet20_bnn as networkc
 import vggsmall_bnn as networkd
 import ghostnet_bnn as networke
+import shufflenetv1_bnn as networkf
+import shufflenetv2_bnn as networkg
+
+
 
 sys.path.append("../../")
 from  utils import *
@@ -35,7 +39,9 @@ ARCH_DICT={
     "resnet18" : networkb,
     "resnet20" : networkc,
     "vggsmall" : networkd,
-    "ghostnet" : networke
+    "ghostnet" : networke,
+    "shufflenetv1" : networkf,
+    "shufflenetv2" : networkg,
 }
 
 
@@ -51,7 +57,7 @@ def getArgs():
     parser.add_argument('--class_num',type=int,default=10,help="datasets class name")
     parser.add_argument('--flag',type=str,default="train",help="train or eval")
     # lr and train setting
-    parser.add_argument('--epochs', default=300, type=int, metavar='N',
+    parser.add_argument('--epochs', default=100, type=int, metavar='N',
                             help='number of total epochs to run')
     parser.add_argument('--batch_size',type=int,default=128,help="batch size")
     parser.add_argument('--lr', default=0.1, type=float,
@@ -70,8 +76,8 @@ def getArgs():
     parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                         help='use pre-trained model')
     parser.add_argument('--num_best_scores',type=int,default=5,help="num_best_scores")
-    parser.add_argument('--optimizer',type=str,default="sgd",choices=["adam","sgd","radam"],help="optimizer")
-    parser.add_argument('--scheduler',type=str,default="cos",choices=["warm_up_cos","cos","step","mstep"],help="scheduler")
+    parser.add_argument('--optimizer',type=str,default="adam",choices=["adam","sgd","radam"],help="optimizer")
+    parser.add_argument('--scheduler',type=str,default="mstep",choices=["warm_up_cos","cos","step","mstep"],help="scheduler")
     parser.add_argument('--step_size',type=int,default=100,help="steplr's step size")
     parser.add_argument('--gamma',type=float,default=0.1,help="learning rate decay")
     # recorder and logging
@@ -95,10 +101,12 @@ def getArgs():
 def main():
     # args
     args=getArgs()
-    if args.arch not in["resnet18","mobilenetv2","mobilenetv1","ghostnet"]:
-        args.steplist = [150,220,260]
-    else:
+    if args.arch in ["resnet18","mobilenetv2","mobilenetv1","ghostnet"]:
+        # args.steplist = [30,60,90]
         args.steplist = [40,80,120]
+    else:
+        args.steplist = [150,220,260]
+
     # logging
     projectName="{}_{}_{}_{}_{}_{}".format(args.model.lower(),args.datasets,
                                     args.epochs,args.batch_size,
@@ -168,7 +176,7 @@ def main():
     if args.scheduler.lower() == 'warm_up_cos':
         warm_up_epochs = 5
         warm_up_with_adam = lambda epoch: (epoch+1) / warm_up_epochs if epoch < warm_up_epochs \
-         else 0.5 * (1 + math.cos(math.pi * epoch / args.epochs))
+        else 0.5 * (1 + math.cos(math.pi * epoch / args.epochs))
         scheduler = torch.optim.lr_scheduler.LambdaLR( optimizer, lr_lambda=warm_up_with_adam)
 
     elif args.scheduler.lower() == "cos":

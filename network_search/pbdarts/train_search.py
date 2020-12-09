@@ -160,7 +160,7 @@ def main():
         drop_rate = args.dropout_rate
     else:
         drop_rate = [0.1, 0.4, 0.7]
-    eps_no_archs = [1, 1, 1]
+    eps_no_archs = [10, 10, 10]
     state_epochs = 0
     for sp in range(len(num_to_keep)):
         model = Network(args.init_channels + int(add_width[sp]), CIFAR_CLASSES, args.layers + int(add_layers[sp]), criterion, 

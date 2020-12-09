@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-10-10 23:04:14
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-16 14:08:10
+# @Last Modified time: 2020-10-11 01:47:43
 
 import torch 
 import torch.nn as nn
@@ -107,10 +107,10 @@ def DoreafaConv2dv2(wbit,abit):
         def forward(self, input):
             # quantize weight 
             if self.wbit == 32:
-                qweight = self.weight
+                weight = self.weight
             elif self.wbit == 1:
-                scale = torch.mean(torch.abs(self.weight)).detach()
-                qweight = binaryfunction.Quantize(self.weight/scale,self.wbit) * scale
+                scale = torch.mean(torch.abs(x)).detach()
+                weight = binaryfunction.Quantize(weigh/scale,self.wbit) * scale
             else:
                 # -max +max
                 weight = torch.tanh(self.weight)

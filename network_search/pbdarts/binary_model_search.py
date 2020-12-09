@@ -8,6 +8,10 @@ from binary_genotypes import PRIMITIVES
 from binary_genotypes import Genotype
 import copy
 
+from attack import AttackPGD
+
+
+
 class MixedOp(nn.Module):
 
     def __init__(self, C, stride, group, switch, p):
@@ -19,7 +23,7 @@ class MixedOp(nn.Module):
                 primitive = PRIMITIVES[i]
                 op = OPS[primitive](C, stride, group,False)
                 if 'pool' in primitive:
-                    op = nn.Sequential(op, nn.BatchNorm2d(C, affine=False))
+                    op = nn.Sequential(op, nn.BatchNorm2d(C, affine=False),nn.Dropout(self.p))
                 if isinstance(op, Identity) and p > 0:
                     op = nn.Sequential(op, nn.Dropout(self.p))
                 self.mix_ops.append(op)
@@ -29,7 +33,9 @@ class MixedOp(nn.Module):
             if isinstance(op, nn.Sequential):
                 if isinstance(op[0], Identity):
                     op[1].p = self.p
-                    
+                elif isinstance(op[0], nn.AvgPool2d) or isinstance(op[0], nn.MaxPool2d) :
+                    op[2].p = self.p
+
     def forward(self, x, weights):
         return sum(w * op(x) for w, op in zip(weights, self.mix_ops))
 
@@ -167,10 +173,11 @@ class Network(nn.Module):
     def arch_parameters(self):
         return self._arch_parameters
 
+
     def weight_parameters(self):
         network_params = []
         for k, v in self.named_parameters():
-            if not (k.endswith('alphas_normal') or k.endswith('alphas_reduce')):
+            if "alphas_normal" not in k and 'alphas_reduce' not in k:
                 network_params.append(v)
         return network_params
 
@@ -184,14 +191,17 @@ if __name__ == '__main__':
     switches_normal = copy.deepcopy(switches)
     switches_reduce = copy.deepcopy(switches)
 
-    net = Network(8,10,4,None,2,2,3,switches_normal=switches_normal, switches_reduce=switches_reduce, group=1, p=0.1)
+    net = Network(12,10,4,None,2,2,3,switches_normal=switches_normal, switches_reduce=switches_reduce, group=1, p=0.1)
     # print(net)
-    print(net.arch_parameters())
+    # print(net.arch_parameters())
     # print(net.genotypev1()
     # print(net.genotypev3())
-    for name,papram in net.named_parameters():
-        print(name)
-    print(net.p)
-    net.p = 0.1
-    net.update_p()
-    print(net.p)
+    # for name,papram in net.named_parameters():
+    #     print(name)
+    net_adv = AttackPGD(net,None)
+    print(net.p,net_adv.model.p)
+    net_adv.model.p = 0.3
+    net_adv.model.update_p()
+    print(net.p,net_adv.model.p)
+    net_adv.train()
+    print(net.training,net_adv.model.training)

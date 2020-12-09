@@ -1,11 +1,11 @@
 import sys
-import genotypes
+import binary_genotypes
 from graphviz import Digraph
 
 
 def plot(genotype, filename):
   g = Digraph(
-      format='pdf',
+      format='png',
       edge_attr=dict(fontsize='20', fontname="times"),
       node_attr=dict(style='filled', shape='rect', align='center', fontsize='20', height='0.5', width='0.5', penwidth='2', fontname="times"),
       engine='dot')
@@ -39,17 +39,38 @@ def plot(genotype, filename):
 
 
 if __name__ == '__main__':
-  if len(sys.argv) != 2:
-    print("usage:\n python {} ARCH_NAME".format(sys.argv[0]))
-    sys.exit(1)
 
-  genotype_name = sys.argv[1]
-  try:
-    genotype = eval('genotypes.{}'.format(genotype_name))
-  except AttributeError:
-    print("{} is not specified in genotypes.py".format(genotype_name)) 
-    sys.exit(1)
+  import os 
 
-  plot(genotype.normal, "normal")
-  plot(genotype.reduce, "reduction")
+  genotype_name_list = [
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop245_archf10_nott_lr001_stage0",
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop245_archf10_nott_lr001_stage1",
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop245_archf10_nott_lr001_stage2",
+                        
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop245_archf10_nott_lr025_stage0",
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop245_archf10_nott_lr025_stage1",
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop245_archf10_nott_lr025_stage2",
 
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop123_archf10_t02_lr025_stage0",
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop123_archf10_t02_lr025_stage1",
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_drop123_archf10_t02_lr025_stage2"
+
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_nodrop_archf10_t02_lr025_stage0",
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_nodrop_archf10_t02_lr025_stage1",
+                        # "ic18_il5_node4_gc6convshuffleres_32w1a_nodrop_archf10_t02_lr025_stage2",
+
+                        "ic18_il5_node4_gc6convshuffleres_32w1a_drop123_archf10_t02_lr025_adv5_stage0",
+                        "ic18_il5_node4_gc6convshuffleres_32w1a_drop123_archf10_t02_lr025_adv5_stage1",
+                        "ic18_il5_node4_gc6convshuffleres_32w1a_drop123_archf10_t02_lr025_adv5_stage2_15",
+                        "ic18_il5_node4_gc6convshuffleres_32w1a_drop123_archf10_t02_lr025_adv5_stage2_19",
+                        "ic18_il5_node4_gc6convshuffleres_32w1a_drop123_archf10_t02_lr025_adv5_stage2"
+                          ]
+  datapath="./cells/pbdarts"
+  for i in range(len(genotype_name_list)):
+    genotype_name = genotype_name_list[i]
+    path = os.path.join(datapath,genotype_name)
+    if not os.path.exists(path):
+      os.mkdir(path)
+    genotype = eval('binary_genotypes.{}'.format(genotype_name))
+    plot(genotype.normal, os.path.join(path,"normal"))
+    plot(genotype.reduce, os.path.join(path,"reduction"))

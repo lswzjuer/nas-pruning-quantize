@@ -64,6 +64,26 @@ class BinaryFuncv2(Function):
 
 
 
+class BinaryFuncv3(Function):
+    @staticmethod
+    def forward(ctx, input):
+        ctx.save_for_backward(input)
+        out = safeSign(input)
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        input, = ctx.saved_tensors
+        mask1 = input < -1
+        mask2 = input < 0
+        mask3 = input < 1
+        mask = 0 * mask1.type(torch.float32) + (input*2 + 2) * (1-mask1.type(torch.float32))
+        mask = mask * mask2.type(torch.float32) + (-input*2 + 2) * (1-mask2.type(torch.float32))
+        mask = mask * mask3.type(torch.float32) + 0 * (1- mask3.type(torch.float32))
+        return grad_output * mask
+
+
+
 if __name__ == '__main__':
     # test BinaryFunc
         # 1,3,2,2

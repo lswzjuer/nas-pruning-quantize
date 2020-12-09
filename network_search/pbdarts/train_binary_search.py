@@ -23,21 +23,19 @@ sys.path.append("../../")
 from utils import *
 
 
-
-
 def get_args():
 
     parser = argparse.ArgumentParser("pdarts binary cifar search ")
     parser.add_argument('--workers', type=int, default=2, help='number of workers to load dataset')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size')
 
-    parser.add_argument('--learning_rate', type=float, default=0.025, help='init learning rate')
+    parser.add_argument('--learning_rate', type=float, default=0.001, help='init learning rate')
     parser.add_argument('--learning_rate_min', type=float, default=0.0, help='min learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
     parser.add_argument('--weight_decay', type=float, default=3e-4, help='weight decay')
     parser.add_argument('--epochs', type=int, default=25, help='num of training epochs')
 
-    parser.add_argument('--init_channels', type=int, default=36, help='num of init channels')
+    parser.add_argument('--init_channels', type=int, default=18, help='num of init channels')
     parser.add_argument('--layers', type=int, default=5, help='total number of layers')
     parser.add_argument('--nodes', type=int, default=4, help='middle nodes')
     parser.add_argument('--multiplier', type=int, default=4, help='middle nodes')
@@ -57,8 +55,8 @@ def get_args():
     parser.add_argument('--arch_learning_rate', type=float, default=6e-4, help='learning rate for arch encoding')
     parser.add_argument('--arch_weight_decay', type=float, default=1e-3, help='weight decay for arch encoding')
 
-    parser.add_argument('--save', type=str, default='BEXP', help='experiment path')
-    parser.add_argument('--tmp_data_dir', type=str, default=r'F:\source_code\DataSets', help='temp data dir')
+    parser.add_argument('--save', type=str, default='/share/jjchu/source_code/pbdarts/BEXP', help='experiment path')
+    parser.add_argument('--tmp_data_dir', type=str, default='/share/jjchu/source_code/DataSets', help='temp data dir')
     parser.add_argument('--note', type=str, default='try', help='note for this run')
     parser.add_argument('--resume',action='store_true',default=False,help="traing resume")
     parser.add_argument('--resume_path',type=str,default="./checkpoint/model_xx",help="traing resume_path")
@@ -81,7 +79,7 @@ def main():
     # get log
 
     args = get_args()
-    args.save = '{}/search-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+    args.save = '{}/search-{}-{}'.format(args.save,args.note,time.strftime("%Y%m%d-%H%M%S"))
     # if not os.path.exists(args.save):
     #     os.path.mkdir(args.save)
     tools.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
@@ -126,10 +124,10 @@ def main():
         train_transform, valid_transform = tools._data_transforms_cifar10(args)
 
     if args.cifar100:
-        train_data = dset.CIFAR100(root=args.tmp_data_dir, train=True, download=True, transform=train_transform)
+        train_data = dset.CIFAR100(root=args.tmp_data_dir, train=True, download=False, transform=train_transform)
         vaild_ata = dset.CIFAR100(root=args.tmp_data_dir, train=False, download=False, transform=valid_transform)
     else:
-        train_data = dset.CIFAR10(root=args.tmp_data_dir, train=True, download=True, transform=train_transform)
+        train_data = dset.CIFAR10(root=args.tmp_data_dir, train=True, download=False, transform=train_transform)
         vaild_ata = dset.CIFAR10(root=args.tmp_data_dir, train=False, download=False, transform=valid_transform)
     
     num_train = len(train_data)
@@ -172,9 +170,9 @@ def main():
     if len(args.dropout_rate) ==3:
         drop_rate = args.dropout_rate
     else:
-        drop_rate = [0.1, 0.4, 0.7]
+        drop_rate = [0.1, 0.3, 0.4]
 
-    eps_no_archs = [0, 0, 0]
+    eps_no_archs = [10, 10, 10]
     state_epochs=0
     for sp in range(len(num_to_keep)):
         model = Network(args.init_channels + int(add_width[sp]), CIFAR_CLASSES, args.layers + int(add_layers[sp]), criterion,
@@ -205,12 +203,16 @@ def main():
             epoch_start = time.time()
             # training and logging
             if epoch < eps_no_arch:
-                model.p = float(drop_rate[sp]) * (epochs - epoch - 1) / epochs
+                p = float(drop_rate[sp]) * (epochs - epoch - 1) / epochs
+                logger.info("drop rate:{}".format(p))
+                model.p = p
                 model.update_p()
                 t_top1, t_top5, t_loss = train(state_epochs+epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer_a,
                             args,monitors,logger, train_arch=False)
             else:
-                model.p = float(drop_rate[sp]) * np.exp(-(epoch - eps_no_arch) * scale_factor) 
+                p = float(drop_rate[sp]) * np.exp(-(epoch - eps_no_arch) * scale_factor)
+                logger.info("drop rate:{}".format(p))
+                model.p = p 
                 model.update_p()                
                 t_top1, t_top5, t_loss = train(state_epochs+epoch,train_queue, valid_queue, model, criterion, optimizer, optimizer_a, 
                     args,monitors,logger,train_arch=True)

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from binary_operations import *
 from torch.autograd import Variable
-from utils import drop_path
+from tools import drop_path
 
 
 class Cell(nn.Module):
@@ -101,10 +101,6 @@ class AuxiliaryHeadImageNet(nn.Module):
         x = self.features(x)
         x = self.classifier(x.view(x.size(0),-1))
         return x
-
-
-
-
 
 
 class NetworkCIFAR(nn.Module):
