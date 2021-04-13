@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-15 23:58:45
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-10-03 22:01:22
+# @Last Modified time: 2020-12-22 15:17:10
 
 from torch.utils.data import DataLoader
 import torchvision
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
 
-    args.dataset='tiny_imagenet'
+    args.dataset='cifar10'
     args.train_batch=1
     args.val_batch=1
     args.num_workers=1
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     for i,sample in enumerate(dataloader):
         # n c h w     n 
         images,labels=sample
-        print(images.size(),labels.size())
+        print(np.min(images.numpy(),axis=(0,1,2,3)),np.max(images.numpy(),axis=(0,1,2,3)))
         image=images.numpy()[0].transpose(1,2,0)
         image=image*255
         image=Image.fromarray(image.astype(np.uint8))

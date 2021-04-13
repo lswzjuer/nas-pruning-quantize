@@ -148,6 +148,8 @@ def main():
       vaild_ata, batch_size=args.batch_size,
       pin_memory=True, num_workers=args.workers)
 
+
+
     # build Network
     criterion = nn.CrossEntropyLoss()
     criterion = criterion.to(args.device)

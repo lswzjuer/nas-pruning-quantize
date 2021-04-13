@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-16 17:11:29
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-22 17:55:51
+# @Last Modified time: 2020-12-15 06:06:07
 from torch.nn import init
 from .efficientnet import EfficientNetB0
 from .googlenet import GoogLeNetV1
@@ -23,6 +23,9 @@ from .resnet_imagenet import resnet18,resnet34,resnet50,resnet101,resnet152
 from .alexnet import alexnet
 
 from .ghostnet import GhostNetV1
+
+from .vggsmall import vgg_small
+
 
 def init_weights(net, init_type='kaiming', gain=0.02):
     def init_func(m):
@@ -45,7 +48,7 @@ def init_weights(net, init_type='kaiming', gain=0.02):
             init.normal_(m.weight, 1.0)
             init.constant_(m.bias, 0.0)
 
-    print('initialize network with %s' % init_type)
+    logger.info('initialize network with %s' % init_type)
     net.apply(init_func)
 
 
@@ -120,6 +123,9 @@ def get_models(model_name,init_type="kaiming",**kwargs):
         model=VGG16(**kwargs)      
     elif model_name=="VGG19":
         model=VGG19(**kwargs)
+
+    elif model_name=="vggsmall":
+        model=vgg_small(**kwargs)  
 
     elif model_name == "alexnet":
         model=alexnet(**kwargs)

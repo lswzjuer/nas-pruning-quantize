@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-11-19 20:43:55
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-19 23:09:38
+# @Last Modified time: 2020-12-29 19:48:59
 
 
 
@@ -11,9 +11,13 @@ import os
 import matplotlib.pyplot as plt
 import pickle
 
+# import matplotlib
+# plt.rc('font',family='Times New Roman')
+# del matplotlib.font_manager.weight_dict['roman']
+# matplotlib.font_manager._rebuild()
 
-
-
+# plt.rcParams['font.sans-serif']=['Times New Roman'] 
+plt.rcParams['font.sans-serif']=['FangSong'] 
 
 xdata1 = [1,2,2.5,3,3.5,4,5,6]
 ydata1 = [74.82,82.53,83.30,83.47,83.32,83.20,82.17,60.32]
@@ -52,8 +56,8 @@ plt.xticks(my_x_ticks)
 plt.yticks(my_y_ticks)
 sub1.set_xlim(0, 7)
 sub1.set_ylim(50, 100)  
-sub1.set_xlabel('$\\rho$')
-sub1.set_ylabel('$Accuracy$')
+sub1.set_xlabel('$\\rho$',fontdict={'weight': 'normal', 'size': 14})
+sub1.set_ylabel(u'准确率(%)',fontdict={'weight': 'normal', 'size': 14})
 sub1.xaxis.grid(True, which='major') #x坐标轴的网格使用主刻度 
 sub1.yaxis.grid(True, which='minor') #y坐标轴的网格使用次刻度 
 sub1.grid(linestyle='-.')
@@ -73,7 +77,7 @@ plt.xticks(my_x_ticks)
 plt.yticks(my_y_ticks)
 sub2.set_xlim(0, 7)
 sub2.set_ylim(50, 100)  
-sub2.set_xlabel('$\\rho$')
+sub2.set_xlabel('$\\rho$',fontdict={'weight': 'normal', 'size': 14})
 # sub1.set_ylabel('$Accuracy$')
 sub2.xaxis.grid(True, which='major') #x坐标轴的网格使用主刻度 
 sub2.yaxis.grid(True, which='minor') #y坐标轴的网格使用次刻度 

@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-09-18 01:04:24
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-22 19:26:45
+# @Last Modified time: 2020-12-15 22:39:18
 
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -24,7 +24,7 @@ import math
 #         'VGG11','VGG13','VGG16','VGG19',
 #         "GhostNetV1"]
 
-Models = ["GhostNetV1","MobileNetV1","MobileNetV2",'ShuffleNetG1','ShuffleNetV2_1']
+Models = ["vggsmall"]
 
 # Models=["GoogLeNetV1",
 #         'resnet20','resnet32','resnet44','resnet56','resnet110',
@@ -43,7 +43,7 @@ def paramsFlopsCounter(models,num_classes=10,input_shape=(3,32,32)):
         model = model.eval()
         pa1=getParams(model)
         fl1=getFlops(model,input_shape)
-        fl2,pa2=get_model_complexity_info(model,input_shape)
+        fl2,pa2=get_model_complexity_info(model,input_shape,True)
         #logger.info("{}  v1: {}--{} ".format(model,pa1,fl1))
         logger.info("{}  v1: {}--{}  v2: {}--{}".format(modelname,pa1,fl1,pa2,fl2))
 
@@ -87,11 +87,11 @@ class weightActivateCollect(object):
             if type(module).__name__ in self.weightops:
                 weightname=name+".weight"
                 weightdict[weightname]={"m":module.weight.cpu().detach().numpy().astype(np.float32),"type":type(module).__name__}
-                print(name,type(module).__name__,module.weight.size())
+                logger.info(name,type(module).__name__,module.weight.size())
             if type(module).__name__ in self.activaops:
                 nameList.append((name,type(module).__name__))
                 module.register_forward_hook(_hook)
-                print(name,type(module).__name__)
+                logger.info(name,type(module).__name__)
 
         # forward
         self.model.to(torch.device("cpu"))
@@ -206,7 +206,7 @@ def histgram(name,values,path,index=None,type=None,sqnr=None):
     # 
     values=values.flatten()
     # from collections import Counter
-    # print(Counter(list(values)))
+    # logger.info(Counter(list(values)))
     # set the plt
     fig=plt.figure()
     plt.grid()
@@ -258,7 +258,7 @@ def SQNRComputer(data,weight=True):
 
 
 if __name__ == '__main__':
-    paramsFlopsCounter(Models,100,(3,224,224))
+    paramsFlopsCounter(Models,10,(3,32,32))
     # checkpoint=r"./checkpoints/vgg13_cifar10_300_128_0.007_1/ckpts/vgg13_best.pth.tar"
     # save_path=r"./histogram"
     # cifar10=getDataloader("cifar10","val",64,

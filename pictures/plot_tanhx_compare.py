@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-11-18 20:49:57
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-19 22:38:00
+# @Last Modified time: 2020-12-29 19:44:32
 import numpy as np 
 import os 
 import matplotlib.pyplot as plt
@@ -12,6 +12,14 @@ import scipy
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
+# import matplotlib
+# plt.rc('font',family='Times New Roman')
+# del matplotlib.font_manager.weight_dict['roman']
+# matplotlib.font_manager._rebuild()
+plt.rcParams['font.sans-serif']=['FangSong'] 
+
+
+# plt.rcParams['font.sans-serif']=['FangSong'] 
 
 def smoothValue(olddata,factor):
     last = olddata[0]
@@ -53,11 +61,11 @@ if __name__=="__main__":
     vggsmall_float = readfile(os.path.join(folder,"vggsmall.csv"))
     vggsmall_dorefa = readfile(os.path.join(folder,"vggsmall-dorefa1w1a.csv"))
 
-    vbnn_original = readfile(os.path.join(folder,"vggsmall-xnor-original.csv"))
-    vbnn_tanh3x = readfile(os.path.join(folder,"vggsmall-xnor-tanh3x.csv"))
+    vxnor_original = readfile(os.path.join(folder,"vggsmall-xnor-original_2.csv"))
+    vxnor_tanh3x = readfile(os.path.join(folder,"vggsmall-xnor-tanh3x_2.csv"))
 
-    vxnor_original = readfile(os.path.join(folder,"vggsnall-bnn-original.csv"))
-    vxnor_tanh3x = readfile(os.path.join(folder,"vggsnall-bnn-tanh3x.csv"))
+    vbnn_original = readfile(os.path.join(folder,"vggsnall-bnn-original_2.csv"))
+    vbnn_tanh3x = readfile(os.path.join(folder,"vggsnall-bnn-tanh3x_2.csv"))
     
 
 
@@ -67,7 +75,7 @@ if __name__=="__main__":
     # plt.subplots_adjust(top=0.15)
     # add subplot1
     sub1 = fig.add_subplot(1,1,1)
-    sub1.set_title("ResNet-20")
+    # sub1.set_title("ResNet-20")
     # sub1.plot(range(len(resnet20_float)),resnet20_float,color = "black",  linestyle = '-.',
     #           label=r"$float$")
     sub1.plot(range(len(resnet20_dorefa)),resnet20_dorefa,color ="black",  linestyle = ':',
@@ -76,17 +84,17 @@ if __name__=="__main__":
     sub1.plot(range(len(bnn_original)),bnn_original,color = "green", linestyle = ':',
               label=r"$BNN$")
     sub1.plot(range(len(bnn_tanh3x)),bnn_tanh3x,color = "green", linestyle = '-',
-              label=r"$BNN(tanh)$")
+              label=r"$BNN(Tanh)$")
 
     sub1.plot(range(len(xnor_original)),xnor_original,color = "red", linestyle = ':',
               label=r"$XNOR$")
     sub1.plot(range(len(xnor_tanh3x)),xnor_tanh3x,color = "red", linestyle = '-',
-              label=r"$XNOR(tanh)$")
+              label=r"$XNOR(Tanh)$")
 
     sub1.plot(range(len(bireal_original)),bireal_original,color = "blue", linestyle = ':',
               label=r"$Bireal$")
     sub1.plot(range(len(bireal_tanh3x)),bireal_tanh3x,color = "blue", linestyle = '-',
-              label=r"$Bireal(tanh)$")
+              label=r"$Bireal(Tanh)$")
 
 
     # axins = sub1.inset_axes((0.1, 0.1, 0.3, 0.3))
@@ -104,17 +112,17 @@ if __name__=="__main__":
     axins.plot(range(len(bnn_original)),bnn_original,color = "green", linestyle = ':',
               label=r"$BNN$")
     axins.plot(range(len(bnn_tanh3x)),bnn_tanh3x,color = "green", linestyle = '-',
-              label=r"$BNN(tanh)$")
+              label=r"$BNN(Tanh)$")
 
     axins.plot(range(len(xnor_original)),xnor_original,color = "red", linestyle = ':',
               label=r"$XNOR$")
     axins.plot(range(len(xnor_tanh3x)),xnor_tanh3x,color = "red", linestyle = '-',
-              label=r"$XNOR(tanh)$")
+              label=r"$XNOR(Tanh)$")
 
     axins.plot(range(len(bireal_original)),bireal_original,color = "blue", linestyle = ':',
               label=r"$Bireal$")
     axins.plot(range(len(bireal_tanh3x)),bireal_tanh3x,color = "blue", linestyle = '-',
-              label=r"$Bireal(tanh)$")
+              label=r"$Bireal(Tanh)$")
     # axins.set_xlim(250, 300)
     # axins.set_ylim(ylim0, ylim1)
     # 设置放大区间
@@ -146,8 +154,10 @@ if __name__=="__main__":
     # # my_y_ticks = np.arange(0, 100, 5)
     # plt.xticks(my_x_ticks)
     # plt.yticks(my_y_ticks)
-    sub1.set_xlabel('Epoch')
-    sub1.set_ylabel('$Accuracy$')
+    # sub1.set_xlabel('迭代次数(epoch)')
+    # sub1.set_ylabel('准确率(%)')
+    sub1.set_xlabel(u'训练轮数(epochs)',fontdict={'weight': 'normal', 'size': 14})
+    sub1.set_ylabel(u'准确率(%)',fontdict={'weight': 'normal', 'size': 14})
     # sub1.set_xlim(10, 305)
     # sub1.set_ylim(40, 92)   
     sub1.xaxis.grid(True, which='major') #x坐标轴的网格使用主刻度 
@@ -164,7 +174,7 @@ if __name__=="__main__":
 
     fig = plt.figure()
     sub2 = fig.add_subplot(1, 1, 1)
-    sub2.set_title("Vggsmall")
+    # sub2.set_title("Vggsmall")
     # sub2.plot(range(len(vggsmall_float)),vggsmall_float,color = "black",  linestyle = '-.',
     #           label=r"$float$")
     sub2.plot(range(len(vggsmall_dorefa)),vggsmall_dorefa,color ="black",  linestyle = ':',
@@ -230,8 +240,10 @@ if __name__=="__main__":
     # plt.yticks(my_y_ticks)
     # sub2.set_xlim(10, 305)
     # sub2.set_ylim(40, 95)  
-    sub2.set_xlabel('Epoch')
-    sub2.set_ylabel('$Accuracy$')
+    # sub2.set_xlabel('迭代次数(epoch)')
+    # sub2.set_ylabel('准确率(%)')
+    sub2.set_xlabel(u'训练轮数(epochs)',fontdict={'weight': 'normal', 'size': 14})
+    sub2.set_ylabel(u'准确率(%)',fontdict={'weight': 'normal', 'size': 14})
     sub2.xaxis.grid(True, which='major') #x坐标轴的网格使用主刻度 
     sub2.yaxis.grid(True, which='minor') #y坐标轴的网格使用次刻度 
     sub2.grid(linestyle='-.')

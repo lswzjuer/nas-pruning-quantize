@@ -2,7 +2,7 @@
 # @Author: liusongwei
 # @Date:   2020-11-28 11:14:04
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-30 15:38:38
+# @Last Modified time: 2020-12-10 02:11:42
 import os
 import sys
 import time
@@ -73,10 +73,9 @@ def get_args():
 
 
 
+
 def main():
-
     # get log
-
     args = get_args()
     args.save = '{}/eval-{}-{}'.format(args.save,args.note,time.strftime("%Y%m%d-%H%M%S"))
     # if not os.path.exists(args.save):

@@ -61,7 +61,7 @@ def getFlops(model, input_shape=(3, 224, 224)):
 
 
 def get_model_complexity_info(model, input_res,
-                              print_per_layer_stat=True,
+                              logger.info_per_layer_stat=True,
                               as_strings=True,
                               input_constructor=None, ost=sys.stdout):
     '''

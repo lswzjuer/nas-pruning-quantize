@@ -2,11 +2,15 @@
 # @Author: liusongwei
 # @Date:   2020-11-12 16:34:10
 # @Last Modified by:   liusongwei
-# @Last Modified time: 2020-11-19 00:00:00
+# @Last Modified time: 2021-01-07 18:25:30
 
 
 import numpy as np 
 import matplotlib.pyplot as plt
+import matplotlib
+plt.rc('font',family='Times New Roman')
+del matplotlib.font_manager.weight_dict['roman']
+matplotlib.font_manager._rebuild()
 
 
 # ndarray
@@ -108,13 +112,13 @@ if __name__ == '__main__':
 
     # add subplot1
     sub1 = fig.add_subplot(1, 2, 1)
-    sub1.set_title("Forward")
+    sub1.set_title("Forward",fontdict={'weight': 'normal', 'size': 13})
     sub1.plot(flist,sign_list,color = 'black', linewidth = 2.0, linestyle = '-',
-              label=r"$sign(.)$")
+              label="$Sign$")
     sub1.plot(flist,htanh_list,color = 'red', linewidth = 2.0, linestyle = '-',
-              label=r"$Htanh(.)$")
+              label="$Htanh$")
     sub1.plot(flist,approx_list,color = 'orange', linewidth = 2.0, linestyle = '-',
-              label=r"$ApproxFunc(.)$")
+              label="$ApproxFunc$")
 
     sub1.fill_between(flist, sign_list, htanh_list, color="g", alpha=0.3)
     sub1.fill_between(flist, sign_list, approx_list, color="b", alpha=0.3)
@@ -131,8 +135,8 @@ if __name__ == '__main__':
 
     sub1.set_xlim(-2, 2)
     sub1.set_ylim(-3, 3)
-    sub1.set_xlabel('x')
-    sub1.set_ylabel('$F(x)$')
+    sub1.set_xlabel('x',fontdict={'weight': 'normal', 'size': 15})
+    sub1.set_ylabel('F(x)',fontdict={'weight': 'normal', 'size': 14})
     sub1.grid(linestyle='-.')
     handles, labels = sub1.get_legend_handles_labels()
     # reverse the order
@@ -140,20 +144,20 @@ if __name__ == '__main__':
 
 
     sub2 = fig.add_subplot(1, 2, 2)
-    sub2.set_title("Backward")
+    sub2.set_title("Backward",fontdict={'weight': 'normal', 'size': 13})
     sub2.plot(flist,sign_grad,color = 'black', linewidth = 2.0, linestyle = '-',
-              label=r"$\frac{\mathrm{d}sign(x)}{\mathrm{d}x}$")
+              label=r"$\nabla_{x}Sign$")
     sub2.plot(flist,htanh_grad,color = 'red', linewidth = 2.0, linestyle = '-',
-              label=r"$\frac{\mathrm{d}Htanh(x)}{\mathrm{d}x}$")
+              label=r"$\nabla_{x}Htanh$")
     sub2.plot(flist,approx_grad,color = 'orange', linewidth = 2.0, linestyle = '-',
-              label=r"$\frac{\mathrm{d}ApproxFunc(x)}{\mathrm{d}x}$")
+              label=r"$\nabla_{x}ApproxFunc$")
 
     sub2.set_xlim(-2, 2,0.5)
     sub2.set_ylim(-3, 3,0.5)
-    sub2.set_xlabel('x')
-    sub2.set_ylabel(r'$\frac{\mathrm{d}F(x)}{\mathrm{d}x}$')
+    sub2.set_xlabel('x',fontdict={'weight': 'normal', 'size': 15})
+    sub2.set_ylabel(r"$\nabla_{x}F(x)$",fontdict={'weight': 'normal', 'size': 14})
     sub2.grid(linestyle='-.')
     sub2.legend(loc=4)
-
+    plt.tight_layout()
     plt.savefig("./sign_htanh_approx.png")
-    plt.close()
+    plt.show()
